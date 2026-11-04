@@ -1,4 +1,9 @@
 <!DOCTYPE html>
+<!-- Canonical Academy Yearbook Studio.
+     The founding khaemenes_academy_yearbook (1).html supplied by the founder
+     is the feature baseline. index.html retains its 50-photo studio and
+     includes protective, backward-compatible refinements.
+     The separate yearbook-agi-minicloud.html is NOT an entry point for this app. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -108,14 +113,14 @@ h1,.side h2{font-family:Cinzel,Georgia,serif;font-weight:400}
 <div class="layout">
   <main class="panel">
     <div class="toolbar">
-      <button class="btn primary" id="addBtn">＋ Add photos</button>
+      <button class="btn primary" id="addBtn" disabled>＋ Add photos</button>
       <button class="btn" id="exportBtn">Export project</button>
       <button class="btn" id="importBtn">Import project</button>
       <button class="btn subtle" id="printBtn">Print yearbook</button>
       <span class="counter" id="counter">0 / 50 photos</span>
     </div>
-    <input id="fileInput" type="file" accept="image/*" multiple>
-    <input id="projectInput" type="file" accept="application/json,.json">
+    <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple aria-label="Choose up to 50 yearbook photos">
+    <input id="projectInput" type="file" accept="application/json,.json" aria-label="Import saved yearbook backup">
     <div class="grid-wrap"><div class="photo-grid" id="photoGrid"></div></div>
     <p class="hint">Select any photo to edit it. Images are resized locally for storage. Gallery previews match saved cropping and frames. Export a JSON backup before changing browsers or clearing browser data.</p>
   </main>
@@ -209,7 +214,7 @@ function renderGrid(){
       tools.append(edit,down);tile.appendChild(tools);}
     grid.appendChild(tile);
   }
-  $("addBtn").disabled=photos.length>=MAX_PHOTOS;
+  $("addBtn").disabled=!db||photos.length>=MAX_PHOTOS;
 }
 function chooseForSlot(slot){pendingSlot=slot;$("fileInput").click();}
 function selectPhoto(id){
@@ -344,7 +349,7 @@ $("projectInput").addEventListener("change",async e=>{
 });
 async function init(){
   try{db=await openDB();photos=sortPhotos(await getAll());renderGrid();setStatus("Ready: "+photos.length+" photo(s) saved locally. Export a backup regularly.");}
-  catch(e){$("photoGrid").innerHTML='<div class="empty-state">Local photo storage could not be opened in this browser. Try a current browser with IndexedDB enabled.</div>';setStatus(e.message);}
+  catch(e){$("addBtn").disabled=true;$("photoGrid").innerHTML='<div class="empty-state">Local photo storage could not be opened in this browser. Try a current browser with IndexedDB enabled.</div>';setStatus(e.message);}
 }
 init();
 })();
