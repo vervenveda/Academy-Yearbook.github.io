@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#171717">
+<title>Khaemenes Academy — Yearbook Studio</title>
+<style>
+:root{
+  --bg:#111214;--panel:#1b1d20;--panel2:#23262a;--ink:#f4f0e6;--muted:#b8b2a5;
+  --gold:#c9a86a;--line:#49443a;--accent:#c9a86a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#27251f 0,#111214 58%);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1200px;margin:auto;padding:22px}
+header{text-align:center;padding:14px 0 22px}
+.eyebrow{color:var(--gold);letter-spacing:.24em;text-transform:uppercase;font-size:11px}
+h1{font-family:Georgia,serif;font-weight:500;letter-spacing:.06em;font-size:clamp(27px,5vw,42px);margin:7px 0}
+.sub{color:var(--muted);margin:0}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+.panel{background:linear-gradient(180deg,#202226,#17191c);border:1px solid var(--line);border-radius:17px;padding:17px;box-shadow:0 18px 50px #0005}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.btn{border:1px solid #66583d;background:#2b2924;color:var(--ink);padding:9px 13px;border-radius:9px}
+.btn.primary{background:var(--gold);color:#17130c;border-color:var(--gold);font-weight:700}
+.btn.subtle{border-color:#414348;background:#25272b}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.counter{margin-left:auto;color:var(--muted);font-size:13px}
+.grid-wrap{max-height:690px;overflow:auto;padding:2px 5px 2px 2px}
+.photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.tile{min-width:0;position:relative}
+.photo-card{aspect-ratio:4/5;border:5px solid var(--frame,#c9a86a);border-radius:var(--radius,8px);background:#101114;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.photo-card img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-card.empty{border-style:dashed;color:#8f8a80;flex-direction:column;gap:7px;background:linear-gradient(145deg,#25272b,#151619)}
+.photo-card.empty .plus{font-size:32px;color:var(--gold);line-height:1}
+.photo-card.selected{outline:2px solid #f4e2b7;outline-offset:3px}
+.photo-card .number{position:absolute;top:5px;left:6px;background:#000a;color:#fff;padding:2px 6px;border-radius:5px;font-size:10px}
+.photo-card .mini-caption{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,#000d);padding:18px 7px 6px;font-size:11px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile-tools{display:flex;justify-content:space-between;gap:5px;margin-top:6px}
+.tile-tools button{font-size:11px;padding:5px 7px;border:1px solid #444;background:#22252a;color:#eee;border-radius:6px}
+.side h2{font:500 21px Georgia,serif;margin:0 0 12px}
+.field{margin:12px 0}
+.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
+.field input[type=text],.field select,.field textarea{width:100%;padding:9px;border:1px solid #45474b;background:#111316;color:var(--ink);border-radius:8px}
+.field input[type=color]{width:100%;height:38px;border:1px solid #555;background:#111;padding:3px;border-radius:8px}
+.field input[type=range]{width:100%;accent-color:var(--gold)}
+.field textarea{resize:vertical;min-height:65px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.preview{border:1px solid #48423a;border-radius:12px;padding:10px;background:#111316;margin:12px 0}
+.preview canvas{display:block;width:100%;height:auto;border-radius:5px}
+.hint{font-size:12px;color:var(--muted)}
+.status{min-height:20px;color:#e5c98f;font-size:12px;margin-top:8px}
+.empty-state{text-align:center;padding:30px;color:var(--muted);border:1px dashed #49443a;border-radius:12px}
+footer{text-align:center;color:#918b80;font-size:12px;padding:18px}
+input[type=file]{display:none}
+.print-title{display:none}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.side{order:-1}.grid-wrap{max-height:560px}}
+@media(max-width:560px){.shell{padding:12px}.photo-grid{gap:8px}.panel{padding:12px}.tile-tools button{font-size:10px;padding:5px}.counter{width:100%;margin-left:0}}
+@media print{
+ body{background:#fff;color:#111}.shell{max-width:none;padding:0}.layout{display:block}.panel{background:#fff;border:0;box-shadow:none;padding:0}
+ header{padding:0 0 12px}h1,.eyebrow,.sub{color:#111}.toolbar,.side,.tile-tools,.hint,.status,footer{display:none!important}
+ .grid-wrap{max-height:none;overflow:visible}.photo-grid{grid-template-columns:repeat(3,1fr);gap:10mm}
+ .photo-card{break-inside:avoid;border-color:var(--frame)!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .tile{break-inside:avoid}.print-title{display:block}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+  <div class="eyebrow">Khaemenes Academy · Student Creative Studio</div>
+  <h1>My School Yearbook</h1>
+  <p class="sub">A year of moments, friendships, discoveries and memories.</p>
+</header>
+
+<div class="layout">
+  <main class="panel">
+    <div class="toolbar">
+      <button class="btn primary" id="addBtn">＋ Add photos</button>
+      <button class="btn" id="exportBtn">Export project</button>
+      <button class="btn" id="importBtn">Import project</button>
+      <button class="btn subtle" id="printBtn">Print yearbook</button>
+      <span class="counter" id="counter">0 / 50 photos</span>
+    </div>
+    <input id="fileInput" type="file" accept="image/*" multiple>
+    <input id="projectInput" type="file" accept="application/json,.json">
+    <div class="grid-wrap"><div class="photo-grid" id="photoGrid"></div></div>
+    <p class="hint">Select a photo to edit it. The grid holds up to 50 images and scrolls as your collection grows. Your work stays in this browser unless you export a project backup.</p>
+  </main>
+
+  <aside class="panel side">
+    <h2>Photo editor</h2>
+    <div id="noSelection" class="empty-state">Choose an empty frame to add a photo, or select a photo to edit its crop, frame and caption.</div>
+    <div id="editor" hidden>
+      <div class="preview"><canvas id="preview" width="600" height="750"></canvas></div>
+      <div class="field"><label for="caption">Photo caption</label><input id="caption" type="text" maxlength="90" placeholder="Add a memory or caption"></div>
+      <div class="row">
+        <div class="field"><label for="frameColor">Frame color</label><input id="frameColor" type="color" value="#c9a86a"></div>
+        <div class="field"><label for="frameDesign">Frame design</label>
+          <select id="frameDesign">
+            <option value="classic">Classic</option><option value="double">Double line</option>
+            <option value="dashed">Celebration</option><option value="soft">Soft corners</option>
+            <option value="minimal">Minimal</option><option value="film">Film strip</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label for="zoom">Crop zoom</label><input id="zoom" type="range" min="1" max="3" step=".01" value="1"></div>
+      <div class="field"><label for="panX">Move image left / right</label><input id="panX" type="range" min="-100" max="100" value="0"></div>
+      <div class="field"><label for="panY">Move image up / down</label><input id="panY" type="range" min="-100" max="100" value="0"></div>
+      <p class="hint">Adjust zoom and position to frame the moment. The preview updates as you edit.</p>
+      <div class="toolbar">
+        <button class="btn primary" id="saveEdit">Save edits</button>
+        <button class="btn" id="downloadPhoto">Download photo</button>
+        <button class="btn subtle" id="deletePhoto">Remove photo</button>
+      </div>
+      <div class="status" id="status" aria-live="polite"></div>
+    </div>
+  </aside>
+</div>
+<footer>Private by design · Offline-ready · No accounts · No external libraries</footer>
+</div>
+
+<script>
+(() => {
+"use strict";
+const MAX_PHOTOS=50, DB_NAME="KhaemenesYearbook", DB_VERSION=1, STORE="photos";
+const $=id=>document.getElementById(id);
+let db, photos=[], selectedId=null, draft=null, sourceImage=null;
+
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    if(!("indexedDB" in window)){reject(new Error("This browser does not support local image storage."));return;}
+    const req=indexedDB.open(DB_NAME,DB_VERSION);
+    req.onupgradeneeded=()=>{const d=req.result;if(!d.objectStoreNames.contains(STORE))d.createObjectStore(STORE,{keyPath:"id"});};
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+  });
+}
+function transaction(mode,fn){
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(STORE,mode),store=tx.objectStore(STORE);
+    let result;try{result=fn(store);}catch(e){reject(e);return;}
+    tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+}
+async function getAll(){
+  return new Promise((resolve,reject)=>{const r=db.transaction(STORE).objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+}
+async function put(photo){return transaction("readwrite",s=>s.put(photo));}
+async function remove(id){return transaction("readwrite",s=>s.delete(id));}
+function uid(){return "p_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,8);}
+function escapeHTML(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function defaults(data){return {id:uid(),data,caption:"",color:"#c9a86a",design:"classic",zoom:1,panX:0,panY:0};}
+
+function renderGrid(){
+  const grid=$("photoGrid");grid.innerHTML="";
+  $("counter").textContent=`${photos.length} / ${MAX_PHOTOS} photos`;
+  for(let i=0;i<MAX_PHOTOS;i++){
+    const p=photos[i],tile=document.createElement("div");tile.className="tile";
+    const card=document.createElement("div");card.className="photo-card"+(!p?" empty":"")+(p&&p.id===selectedId?" selected":"");
+    if(p){
+      card.style.setProperty("--frame",p.color||"#c9a86a");
+      card.style.setProperty("--radius",p.design==="soft"?"18px":"7px");
+      const img=document.createElement("img");img.src=p.data;img.alt=p.caption||`Yearbook photo ${i+1}`;card.appendChild(img);
+      const num=document.createElement("span");num.className="number";num.textContent=String(i+1).padStart(2,"0");card.appendChild(num);
+      if(p.caption){const cap=document.createElement("div");cap.className="mini-caption";cap.textContent=p.caption;card.appendChild(cap);}
+    }else{const plus=document.createElement("div");plus.className="plus";plus.textContent="+";card.appendChild(plus);const label=document.createElement("span");label.textContent="Add memory";card.appendChild(label);}
+    card.addEventListener("click",()=>p?selectPhoto(p.id):chooseForSlot(i));tile.appendChild(card);
+    if(p){const tools=document.createElement("div");tools.className="tile-tools";
+      const edit=document.createElement("button");edit.textContent="Edit";edit.onclick=()=>selectPhoto(p.id);
+      const down=document.createElement("button");down.textContent="Export";down.onclick=()=>downloadPhoto(p);
+      tools.append(edit,down);tile.appendChild(tools);}
+    grid.appendChild(tile);
+  }
+  $("addBtn").disabled=photos.length>=MAX_PHOTOS;
+}
+let pendingSlot=null;
+function chooseForSlot(slot){pendingSlot=slot;$("fileInput").click();}
+function selectPhoto(id){
+  selectedId=id;const p=photos.find(x=>x.id===id);if(!p)return;
+  draft=structuredCloneSafe(p);loadImage(draft.data).then(img=>{sourceImage=img;fillEditor();renderGrid();}).catch(()=>setStatus("Could not load this image."));
+}
+function structuredCloneSafe(x){return JSON.parse(JSON.stringify(x));}
+function loadImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src;});}
+function fillEditor(){
+  $("noSelection").hidden=true;$("editor").hidden=false;
+  $("caption").value=draft.caption||"";$("frameColor").value=draft.color||"#c9a86a";
+  $("frameDesign").value=draft.design||"classic";$("zoom").value=draft.zoom||1;
+  $("panX").value=draft.panX||0;$("panY").value=draft.panY||0;drawPreview();setStatus("");
+}
+function cropRect(img,w,h,zoom,panX,panY){
+  const base=Math.max(w/img.width,h/img.height),scale=base*zoom;
+  const dw=img.width*scale,dh=img.height*scale;
+  const overflowX=Math.max(0,dw-w),overflowY=Math.max(0,dh-h);
+  return {x:(w-dw)/2+(panX/100)*(overflowX/2),y:(h-dh)/2+(panY/100)*(overflowY/2),w:dw,h:dh};
+}
+function drawPhoto(ctx,p,img,w,h,withFrame=true){
+  ctx.clearRect(0,0,w,h);ctx.fillStyle="#111";ctx.fillRect(0,0,w,h);
+  const r=cropRect(img,w,h,Number(p.zoom)||1,Number(p.panX)||0,Number(p.panY)||0);
+  ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();ctx.drawImage(img,r.x,r.y,r.w,r.h);ctx.restore();
+  if(withFrame){
+    const c=p.color||"#c9a86a";ctx.save();ctx.strokeStyle=c;ctx.lineWidth=p.design==="minimal"?5:18;
+    if(p.design==="dashed"){ctx.setLineDash([18,10]);ctx.lineWidth=12;}
+    if(p.design==="double"){ctx.lineWidth=8;ctx.strokeRect(8,8,w-16,h-16);ctx.lineWidth=3;ctx.strokeRect(24,24,w-48,h-48);}
+    else if(p.design==="film"){ctx.lineWidth=18;ctx.strokeRect(9,9,w-18,h-18);ctx.fillStyle=c;for(let y=38;y<h-20;y+=48){ctx.fillRect(2,y,20,20);ctx.fillRect(w-22,y,20,20);}}
+    else if(p.design==="soft"){ctx.lineWidth=15;roundRect(ctx,8,8,w-16,h-16,35);ctx.stroke();}
+    else{ctx.strokeRect(8,8,w-16,h-16);}
+    if(p.design==="classic"){ctx.lineWidth=2;ctx.strokeRect(22,22,w-44,h-44);}
+    ctx.restore();
+  }
+  if(p.caption){ctx.save();ctx.fillStyle="#000a";ctx.fillRect(0,h-65,w,65);ctx.fillStyle="#fff";ctx.font=`${Math.max(18,w*.035)}px Georgia`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(p.caption.slice(0,90),w/2,h-32,w-35);ctx.restore();}
+}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,r):(ctx.rect(x,y,w,h));}
+function drawPreview(){if(!draft||!sourceImage)return;drawPhoto($("preview").getContext("2d"),draft,sourceImage,600,750,true);}
+function setStatus(msg){$("status").textContent=msg;}
+function updateDraft(){
+  if(!draft)return;draft.caption=$("caption").value;draft.color=$("frameColor").value;draft.design=$("frameDesign").value;
+  draft.zoom=Number($("zoom").value);draft.panX=Number($("panX").value);draft.panY=Number($("panY").value);drawPreview();
+}
+["caption","frameColor","frameDesign","zoom","panX","panY"].forEach(id=>$(id).addEventListener("input",updateDraft));
+$("saveEdit").addEventListener("click",async()=>{if(!draft)return;updateDraft();await put(draft);photos=await getAll();photos.sort((a,b)=>a.id.localeCompare(b.id));renderGrid();setStatus("Edits saved on this device.");});
+async function addFiles(files){
+  const usable=[...files].filter(f=>f.type.startsWith("image/"));
+  const room=MAX_PHOTOS-photos.length;
+  if(usable.length>room)setStatus(`Only ${room} more photo(s) fit. The rest were skipped.`);
+  for(const file of usable.slice(0,room)){
+    const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});
+    const p=defaults(data);await put(p);photos.push(p);
+  }
+  renderGrid();
+  if(pendingSlot!==null&&photos.length){selectPhoto(photos[photos.length-1].id);pendingSlot=null;}
+}
+$("addBtn").addEventListener("click",()=>$("fileInput").click());
+$("fileInput").addEventListener("change",async e=>{try{await addFiles(e.target.files);}catch(err){alert("Could not add one or more images: "+err.message);}e.target.value="";});
+$("deletePhoto").addEventListener("click",async()=>{if(!selectedId)return;if(!confirm("Remove this photo from the yearbook?"))return;await remove(selectedId);photos=await getAll();selectedId=null;draft=null;sourceImage=null;$("editor").hidden=true;$("noSelection").hidden=false;renderGrid();});
+function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function downloadPhoto(p){
+  loadImage(p.data).then(img=>{const c=document.createElement("canvas");c.width=1200;c.height=1500;drawPhoto(c.getContext("2d"),p,img,c.width,c.height,true);c.toBlob(b=>b&&downloadBlob(b,"khaemenes-yearbook-photo.png"),"image/png");});
+}
+$("downloadPhoto").addEventListener("click",()=>{const p=photos.find(x=>x.id===selectedId);if(p)downloadPhoto(draft||p);});
+$("printBtn").addEventListener("click",()=>window.print());
+$("exportBtn").addEventListener("click",()=>{const blob=new Blob([JSON.stringify({app:"Khaemenes Academy Yearbook",version:1,exported:new Date().toISOString(),photos},null,2)],{type:"application/json"});downloadBlob(blob,"khaemenes-yearbook-project.json");});
+$("importBtn").addEventListener("click",()=>$("projectInput").click());
+$("projectInput").addEventListener("change",async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{const data=JSON.parse(await file.text());if(!data||!Array.isArray(data.photos))throw new Error("This is not a yearbook project file.");
+    if(data.photos.length>MAX_PHOTOS)throw new Error("This project contains more than 50 photos.");
+    if(!confirm("Import this project and replace the photos currently in this yearbook?"))return;
+    await transaction("readwrite",s=>s.clear());photos=[];
+    for(const raw of data.photos){if(!raw.data||!String(raw.data).startsWith("data:image/"))continue;const p={...defaults(raw.data),...raw,id:raw.id||uid()};await put(p);photos.push(p);}
+    selectedId=null;$("editor").hidden=true;$("noSelection").hidden=false;renderGrid();alert("Yearbook project imported.");
+  }catch(err){alert("Import failed: "+err.message);}finally{e.target.value="";}
+});
+function chooseSlotUpload(){if(photos.length>=MAX_PHOTOS)return;$("fileInput").click();}
+async function init(){
+  try{db=await openDB();photos=await getAll();photos.sort((a,b)=>a.id.localeCompare(b.id));renderGrid();}
+  catch(e){$("photoGrid").innerHTML='<div class="empty-state">Local photo storage could not be opened in this browser. Try a current browser with IndexedDB enabled.</div>';setStatus(e.message);}
+}
+init();
+})();
+</script>
+</body>
+</html>
