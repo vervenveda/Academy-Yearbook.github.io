@@ -527,7 +527,7 @@ $("yearbookProfileBackground").addEventListener("click",()=>{
   const id=typeof selected==="string"?selected:selected?.learnerId;
   const registry=JSON.parse(localStorage.getItem("khaemenes_family_registry_v1")||"null");
   const learner=id&&registry?.learners?.[id];
-  if(!learner||learner.learnerId!==id||!new RegExp("^(?:grade\\\\s*)?0?9$","i").test(String(learner.grade||"").trim())){
+  if(!learner||learner.learnerId!==id||!["9","09","grade9","grade09"].includes(String(learner.grade||"").toLowerCase().split(" ").join(""))){
    status.textContent="Select your existing Grade 9 learner in the Family Registry first.";return;
   }
   const owner=encodeURIComponent(id);
