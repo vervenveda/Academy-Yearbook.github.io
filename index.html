@@ -155,6 +155,38 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
 @media(max-width:560px){.photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#yearbookEditorDialog{width:calc(100vw - 12px);height:95dvh;max-height:95dvh}#yearbookEditorDialog .yearbook-dialog-body{padding:10px}}
 @media print{.yearbook-gallery-actions,#yearbookEditorDialog{display:none!important}.yearbook-gallery-panel .photo-grid{grid-template-columns:repeat(3,1fr)}}
 
+
+/* Yearbook editor workspace: fixed preview at left, independent controls at right.
+   These rules are scoped to the modal; the public gallery stays full-width. */
+@media(min-width:701px){
+ #yearbookEditorDialog{width:min(1050px,calc(100vw - 24px));max-width:1050px;height:min(94dvh,900px);max-height:94dvh}
+ #yearbookEditorDialog .yearbook-dialog-body{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:hidden;padding:12px 16px}
+ #yearbookEditorDialog .yearbook-controls-column{display:flex;flex:1;min-height:0;flex-direction:column;gap:10px}
+ #yearbookEditorDialog .yearbook-action-banner{flex:0 0 auto;padding:10px 14px}
+ #yearbookEditorDialog .yearbook-action-banner h2{font-size:18px;margin-bottom:2px}
+ #yearbookEditorDialog .yearbook-tools-description{margin:0 0 8px}
+ #yearbookEditorDialog .yearbook-action-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+ #yearbookEditorDialog .yearbook-action-grid .btn{min-height:40px;padding:7px 8px}
+ #yearbookEditorDialog .yearbook-photo-counter{margin:5px 0 0;padding:0}
+ #yearbookEditorDialog .yearbook-editor-panel{display:flex;flex:1;min-height:0;flex-direction:column;padding:12px}
+ #yearbookEditorDialog .yearbook-editor-panel h2{margin:0 0 8px}
+ #yearbookEditorDialog #editor:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,330px);gap:14px;flex:1;min-height:0;align-items:stretch}
+ #yearbookEditorDialog .yearbook-preview-pane{min-height:0;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+ #yearbookEditorDialog .yearbook-preview-pane canvas{width:auto;max-width:100%;height:auto;max-height:calc(94dvh - 290px);object-fit:contain}
+ #yearbookEditorDialog .yearbook-preview-caption{text-align:center;color:#e0d7c5;margin:7px 0 0;font-size:16px}
+ #yearbookEditorDialog .yearbook-edit-controls{min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:2px 9px 10px 2px;scrollbar-gutter:stable}
+ #yearbookEditorDialog .yearbook-edit-controls .field{margin:6px 0 10px}
+ #yearbookEditorDialog .yearbook-edit-controls .toolbar{position:sticky;bottom:0;z-index:1;margin:10px 0 0;padding:9px 0 0;display:grid;grid-template-columns:1fr;gap:7px;background:#202d2c;border-top:1px solid #887552}
+ #yearbookEditorDialog .yearbook-edit-controls .toolbar button{width:100%}
+ #yearbookEditorDialog .yearbook-future-tools{display:none}
+}
+@media(max-width:700px){
+ #yearbookEditorDialog .yearbook-preview-pane{margin-bottom:12px}
+ #yearbookEditorDialog .yearbook-preview-caption{font-size:16px;text-align:center}
+ #yearbookEditorDialog .yearbook-edit-controls .toolbar{display:grid;grid-template-columns:1fr;gap:8px}
+ #yearbookEditorDialog .yearbook-edit-controls .toolbar button{width:100%}
+}
+
 /* Official VNV header and utility dock are owned by canonical ecosystem scripts.
    Keep Yearbook-specific selectors scoped to avoid competing UI layers. */
 .yearbook-footer{box-sizing:border-box;width:100%;margin:24px 0 0;padding:20px 16px 90px;text-align:center;background:#243038;color:#fff8e9;border-top:1px solid #b48b45;font:400 16px/1.6 "Brandon Grotesque",Nunito,Arial,sans-serif}
@@ -209,7 +241,8 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
     <h2 id="yearbookPhotoEditorTitle">Photo Editor</h2>
     <div id="noSelection" class="empty-state">Choose an empty frame to add a photo, or select a photo to edit its crop, frame and caption.</div>
     <div id="editor" hidden>
-      <div class="preview"><canvas id="preview" width="600" height="750"></canvas></div>
+      <div class="preview yearbook-preview-pane"><canvas id="preview" width="600" height="750"></canvas><p class="yearbook-preview-caption">Live photo preview</p></div>
+      <div class="yearbook-edit-controls" aria-label="Photo editing controls">
       <div class="field"><label for="caption">Photo caption</label><input id="caption" type="text" maxlength="90" placeholder="Add a memory or caption"></div>
       <div class="row">
         <div class="field"><label for="frameColor">Frame color</label><input id="frameColor" type="color" value="#c9a86a"></div>
@@ -229,6 +262,7 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
         <button class="btn primary" id="saveEdit">Save edits</button>
         <button class="btn" id="downloadPhoto">Download photo</button>
         <button class="btn subtle" id="deletePhoto">Remove photo</button>
+      </div>
       </div>
 
     </div>
