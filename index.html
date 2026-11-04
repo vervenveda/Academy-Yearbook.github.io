@@ -449,6 +449,8 @@ init();
 </script>
 <script src="https://vervenveda.com/assets/vnv-header-autopopulate.js"></script>
 <script src="https://vervenveda.com/assets/vnv-ecosystem-toolbar.js"></script>
+<script src="https://vervenveda.com/assets/vnv-333-ticker.js"></script>
+<script src="https://vervenveda.com/assets/vnv-ticker-autopopulate.js" data-vnv-ticker-autopopulate></script>
 <script>
 /* Idempotent: canonical header engine owns its hamburger and enriched menu. */
 (function(){
@@ -464,6 +466,22 @@ init();
   ]
  })};
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mount,{once:true});else mount();
+})();
+</script>
+<script>
+/* The two authorized tickers have separate owners. Initialize the
+   page-link ticker only after the canonical header and its links mount. */
+(function(){
+  function mountYearbookPageTicker(){
+    if(!window.VNV_TICKER?.autoPopulate)return;
+    if(document.getElementById("vnvTickerAutoPopulate"))return;
+    window.VNV_TICKER.autoPopulate({label:"Yearbook Quick Links",max:14});
+  }
+  if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded",mountYearbookPageTicker,{once:true});
+  }else{
+    mountYearbookPageTicker();
+  }
 })();
 </script>
 </body>
