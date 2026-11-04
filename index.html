@@ -87,6 +87,8 @@ h1,.side h2{font-family:Cinzel,Georgia,serif;font-weight:400}
 .field input[type=text],.field select,.field textarea{font-size:16px;border-radius:7px}
 .empty-state{border-radius:7px}
 .yearbook-private-note{margin:0 0 14px;padding:11px 14px;border:1px solid #d5b77b;border-radius:7px;background:#293733;color:#fff8e9;font-size:16px;text-align:center}
+.yearbook-app-status{min-height:24px;margin:0 0 12px;padding:7px 12px;color:#fff8e9;background:#263837;border-radius:7px;font-size:16px}
+@media print{.yearbook-app-status,.photo-card.empty,.tile:has(.photo-card.empty){display:none!important}}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.side{order:0}.grid-wrap{max-height:520px}}
 @media(max-width:560px){.photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.shell{padding:12px}.panel{padding:12px}}
 @media print{body{background:#fff}.yearbook-private-note{display:none!important}}
@@ -102,6 +104,7 @@ h1,.side h2{font-family:Cinzel,Georgia,serif;font-weight:400}
 </header>
 
 <p class="yearbook-private-note">Your yearbook is private to this browser profile and is not yet connected to individual Academy learner accounts. You can export and import backups. Only add photographs you have permission to use.</p>
+<p class="yearbook-app-status" id="status" role="status" aria-live="polite">Your yearbook is opening. Photos stay on this browser unless you export a backup.</p>
 <div class="layout">
   <main class="panel">
     <div class="toolbar">
@@ -142,7 +145,7 @@ h1,.side h2{font-family:Cinzel,Georgia,serif;font-weight:400}
         <button class="btn" id="downloadPhoto">Download photo</button>
         <button class="btn subtle" id="deletePhoto">Remove photo</button>
       </div>
-      <div class="status" id="status" aria-live="polite"></div>
+
     </div>
   </aside>
 </div>
@@ -340,7 +343,7 @@ $("projectInput").addEventListener("change",async e=>{
  finally{e.target.value="";}
 });
 async function init(){
-  try{db=await openDB();photos=await getAll();sortPhotos(photos);renderGrid();}
+  try{db=await openDB();photos=sortPhotos(await getAll());renderGrid();setStatus("Ready: "+photos.length+" photo(s) saved locally. Export a backup regularly.");}
   catch(e){$("photoGrid").innerHTML='<div class="empty-state">Local photo storage could not be opened in this browser. Try a current browser with IndexedDB enabled.</div>';setStatus(e.message);}
 }
 init();
