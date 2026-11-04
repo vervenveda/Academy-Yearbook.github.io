@@ -187,6 +187,33 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
  #yearbookEditorDialog .yearbook-edit-controls .toolbar button{width:100%}
 }
 
+
+/* Canonical navigation chrome spans the viewport, not the bounded gallery. */
+#vnv333NetworkTicker,#vnvTickerAutoPopulate,#vnvHeaderAutoPopulate{box-sizing:border-box!important;width:100vw!important;max-width:none!important;margin-left:calc(50% - 50vw)!important;margin-right:0!important}
+#vnvHeaderAutoPopulate .vnv-header-inner{width:100%!important;max-width:none!important}
+.yearbook-preview-viewport{position:relative;width:100%;flex:1;min-height:0;overflow:hidden;display:grid;place-items:center}
+#yearbookEditorDialog .yearbook-preview-pane .yearbook-preview-viewport canvas{max-width:100%;max-height:100%;height:auto;width:auto;object-fit:contain;transform:scale(var(--yearbook-view-zoom,1));transform-origin:center}
+.yearbook-view-zoom{width:100%;display:grid;grid-template-columns:44px minmax(85px,1fr) 44px;align-items:center;gap:8px;margin-top:8px}
+.yearbook-view-zoom label{grid-column:2;grid-row:1;text-align:center;font-size:16px}
+.yearbook-view-zoom input{grid-column:1 / -1;grid-row:2;width:100%}
+.yearbook-view-zoom button:first-child{grid-column:1;grid-row:1}.yearbook-view-zoom button:last-child{grid-column:3;grid-row:1}
+.yearbook-profile-appearance{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;padding:15px;margin-top:15px;border:1px solid #887552;border-radius:7px}
+.yearbook-profile-appearance h2{width:100%;font:400 20px/1.3 Cinzel,Georgia,serif;text-align:center;margin:0}
+.yearbook-profile-appearance p{width:100%;text-align:center;font-size:16px;color:#e0d7c5;margin:0}
+#yearbookSinglePrintSheet{display:none}
+@media(min-width:701px){#yearbookEditorDialog .yearbook-preview-pane{justify-content:stretch}}
+@media(max-width:700px){.yearbook-preview-viewport{height:350px;flex:none}.yearbook-profile-appearance .btn{width:100%}}
+@media print{
+ #vnvEcosystemUtilityDock,#vnv333NetworkTicker,#vnvTickerAutoPopulate,#vnvHeaderAutoPopulate,
+ #vnvEnrichedMenuOverlay,#vnvEnrichedMenuDrawer,#vnvHeaderMenuOverlay,
+ .yearbook-profile-appearance,.yearbook-gallery-actions,#yearbookEditorDialog{display:none!important}
+ body.yearbook-print-single{background:#fff!important}
+ body.yearbook-print-single > :not(#yearbookSinglePrintSheet){display:none!important}
+ body.yearbook-print-single #yearbookSinglePrintSheet{display:flex!important;width:100%;min-height:96vh;margin:0 auto;align-items:center;justify-content:center;background:#fff}
+ body.yearbook-print-single #yearbookSinglePrintImage{display:block;max-width:100%;max-height:96vh;width:auto;height:auto;object-fit:contain}
+ body:not(.yearbook-print-single) #yearbookSinglePrintSheet{display:none!important}
+}
+
 /* Official VNV header and utility dock are owned by canonical ecosystem scripts.
    Keep Yearbook-specific selectors scoped to avoid competing UI layers. */
 .yearbook-footer{box-sizing:border-box;width:100%;margin:24px 0 0;padding:20px 16px 90px;text-align:center;background:#243038;color:#fff8e9;border-top:1px solid #b48b45;font:400 16px/1.6 "Brandon Grotesque",Nunito,Arial,sans-serif}
@@ -212,7 +239,7 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
       <span id="galleryPhotoCount" aria-live="polite">0 / 50 photos</span>
     </div>
     <div class="grid-wrap"><div class="photo-grid" id="photoGrid"></div></div>
-    <p class="hint">Select any photo to edit it. Images are resized locally for storage. Gallery previews match saved cropping and frames. Export a JSON backup before changing browsers or clearing browser data.</p>
+    <p class="hint">Select any photo to edit it. Images are resized locally for storage. Gallery previews match saved cropping and frames. Export a JSON backup before changing browsers or clearing browser data.</p><section class="yearbook-profile-appearance" aria-label="Optional student profile background"><h2>My Yearbook Background</h2><button class="btn" id="yearbookProfileBackground" type="button">Use My Profile Background</button><button class="btn" id="yearbookResetBackground" type="button">Restore Yearbook Background</button><p id="yearbookAppearanceStatus" role="status">Optional Grade 9 appearance preview. Learner preferences and Yearbook photo records are never changed.</p></section>
   </main>
 
 </div>
@@ -241,7 +268,7 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
     <h2 id="yearbookPhotoEditorTitle">Photo Editor</h2>
     <div id="noSelection" class="empty-state">Choose an empty frame to add a photo, or select a photo to edit its crop, frame and caption.</div>
     <div id="editor" hidden>
-      <div class="preview yearbook-preview-pane"><canvas id="preview" width="600" height="750"></canvas><p class="yearbook-preview-caption">Live photo preview</p></div>
+      <div class="preview yearbook-preview-pane"><div class="yearbook-preview-viewport"><canvas id="preview" width="600" height="750"></canvas></div><p class="yearbook-preview-caption">Live photo preview · preview zoom does not change the saved crop</p><div class="yearbook-view-zoom"><button class="btn" id="viewZoomOut" type="button" aria-label="Zoom preview out">−</button><label for="viewZoom">Preview zoom <output id="viewZoomLevel">100%</output></label><input id="viewZoom" type="range" min="1" max="2.5" step=".1" value="1"><button class="btn" id="viewZoomIn" type="button" aria-label="Zoom preview in">+</button></div></div>
       <div class="yearbook-edit-controls" aria-label="Photo editing controls">
       <div class="field"><label for="caption">Photo caption</label><input id="caption" type="text" maxlength="90" placeholder="Add a memory or caption"></div>
       <div class="row">
@@ -257,10 +284,11 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
       <div class="field"><label for="zoom">Crop zoom</label><input id="zoom" type="range" min="1" max="3" step=".01" value="1"></div>
       <div class="field"><label for="panX">Move image left / right</label><input id="panX" type="range" min="-100" max="100" value="0"></div>
       <div class="field"><label for="panY">Move image up / down</label><input id="panY" type="range" min="-100" max="100" value="0"></div>
-      <p class="hint">Adjust zoom and position to frame the moment. The preview updates as you edit.</p>
+      <p class="hint">Crop zoom changes the saved photo; preview zoom only magnifies the editing view.</p>
       <div class="toolbar">
         <button class="btn primary" id="saveEdit">Save edits</button>
         <button class="btn" id="downloadPhoto">Download photo</button>
+        <button class="btn" id="printSelectedPhoto" type="button">Print This Photo</button>
         <button class="btn subtle" id="deletePhoto">Remove photo</button>
       </div>
       </div>
@@ -275,6 +303,7 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
     </div>
   </div>
 </dialog>
+<section id="yearbookSinglePrintSheet" hidden aria-label="Selected photo print"><img id="yearbookSinglePrintImage" alt="Selected Yearbook photo"></section>
 <footer class="yearbook-footer"><div>Verve N Veda · Khaemenes Academy</div><div>My School Yearbook · Private by design · Local photos · Export backups</div></footer>
 </div>
 
@@ -351,11 +380,15 @@ function selectPhoto(id){
 }
 function structuredCloneSafe(x){return JSON.parse(JSON.stringify(x));}
 function loadImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src;});}
+function updatePreviewZoom(){const factor=clamp(Number($("viewZoom").value)||1,1,2.5);$("preview").style.setProperty("--yearbook-view-zoom",factor);$("viewZoomLevel").textContent=Math.round(factor*100)+"%";}
+$("viewZoom").addEventListener("input",updatePreviewZoom);
+$("viewZoomOut").addEventListener("click",()=>{$("viewZoom").value=String(clamp(Number($("viewZoom").value)-.1,1,2.5));updatePreviewZoom()});
+$("viewZoomIn").addEventListener("click",()=>{$("viewZoom").value=String(clamp(Number($("viewZoom").value)+.1,1,2.5));updatePreviewZoom()});
 function fillEditor(){
   $("noSelection").hidden=true;$("editor").hidden=false;
   $("caption").value=draft.caption||"";$("frameColor").value=draft.color||"#c9a86a";
   $("frameDesign").value=draft.design||"classic";$("zoom").value=draft.zoom||1;
-  $("panX").value=draft.panX||0;$("panY").value=draft.panY||0;drawPreview();setStatus("");
+  $("panX").value=draft.panX||0;$("panY").value=draft.panY||0;$("viewZoom").value="1";updatePreviewZoom();drawPreview();setStatus("");
 }
 function cropRect(img,w,h,zoom,panX,panY){
   const base=Math.max(w/img.width,h/img.height),scale=base*clamp(Number(zoom)||1,1,3);
@@ -432,6 +465,18 @@ function downloadPhoto(p){
 }
 $("downloadPhoto").addEventListener("click",()=>{const p=photos.find(x=>x.id===selectedId);if(p)downloadPhoto(draft||p);});
 $("printBtn").addEventListener("click",()=>window.print());
+let printingSingle=false;
+function clearSinglePrint(){if(!printingSingle)return;printingSingle=false;document.body.classList.remove("yearbook-print-single");$("yearbookSinglePrintSheet").hidden=true;$("yearbookSinglePrintImage").removeAttribute("src");}
+window.addEventListener("afterprint",clearSinglePrint);
+$("printSelectedPhoto").addEventListener("click",()=>{
+ if(!draft||!sourceImage){setStatus("Select a photo before printing.");return;}
+ updateDraft();
+ const canvas=document.createElement("canvas");canvas.width=1200;canvas.height=1500;drawPhoto(canvas.getContext("2d"),draft,sourceImage,1200,1500,true);
+ const image=$("yearbookSinglePrintImage");
+ image.onload=()=>{printingSingle=true;$("yearbookSinglePrintSheet").hidden=false;document.body.classList.add("yearbook-print-single");requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()))};
+ image.onerror=()=>{setStatus("Unable to prepare photo print.");clearSinglePrint();};
+ image.src=canvas.toDataURL("image/png");
+});
 $("exportBtn").addEventListener("click",()=>{const blob=new Blob([JSON.stringify({app:"Khaemenes Academy Yearbook",version:1,exported:new Date().toISOString(),photos},null,2)],{type:"application/json"});downloadBlob(blob,"khaemenes-yearbook-project.json");});
 $("importBtn").addEventListener("click",()=>$("projectInput").click());
 function validatedImport(raw){
@@ -473,6 +518,33 @@ $("projectInput").addEventListener("change",async e=>{
   setStatus("Project imported: "+photos.length+" photos. Save an export backup.");
  }catch(error){setStatus("Import failed. Existing records should remain unchanged: "+error.message);}
  finally{e.target.value="";}
+});
+/* Optional same-origin Grade 9 appearance preview; never writes learner keys. */
+$("yearbookProfileBackground").addEventListener("click",()=>{
+ const status=$("yearbookAppearanceStatus");
+ try{
+  const selected=JSON.parse(localStorage.getItem("khaemenes_active_learner_v1")||"null");
+  const id=typeof selected==="string"?selected:selected?.learnerId;
+  const registry=JSON.parse(localStorage.getItem("khaemenes_family_registry_v1")||"null");
+  const learner=id&&registry?.learners?.[id];
+  if(!learner||learner.learnerId!==id||!new RegExp("^(?:grade\\\\s*)?0?9$","i").test(String(learner.grade||"").trim())){
+   status.textContent="Select your existing Grade 9 learner in the Family Registry first.";return;
+  }
+  const owner=encodeURIComponent(id);
+  const color=localStorage.getItem("khaemenes.grade09.profile.background:"+owner);
+  const image=localStorage.getItem("khaemenes.grade09.profile.background.image:"+owner);
+  const validColor=typeof color==="string"&&/^#[0-9a-f]{6}$/i.test(color);
+  const validImage=typeof image==="string"&&image.startsWith("data:image/")&&image.length<8000000&&new RegExp("^data:image/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$","i").test(image);
+  if(!validColor&&!validImage){status.textContent="No saved Grade 9 background was found on this browser.";return;}
+  const layers=[validImage?'url("'+image+'")':"",validColor?color:"linear-gradient(155deg,#162726,#263536 60%,#1d292c)"].filter(Boolean);
+  document.body.style.background=layers.join(", ");
+  if(validImage){document.body.style.backgroundSize="cover";document.body.style.backgroundPosition="center";document.body.style.backgroundAttachment="fixed";}
+  status.textContent="Profile appearance preview applied to Yearbook only. No profile or photo settings were changed.";
+ }catch{status.textContent="Could not read the profile background from this browser."}
+});
+$("yearbookResetBackground").addEventListener("click",()=>{
+ for(const prop of ["background","background-size","background-position","background-attachment"])document.body.style.removeProperty(prop);
+ $("yearbookAppearanceStatus").textContent="Yearbook background restored.";
 });
 async function init(){
   try{db=await openDB();photos=sortPhotos(await getAll());renderGrid();setStatus("Ready: "+photos.length+" photo(s) saved locally. Export a backup regularly.");}
