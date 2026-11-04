@@ -214,6 +214,13 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
  body:not(.yearbook-print-single) #yearbookSinglePrintSheet{display:none!important}
 }
 
+
+/* Keep the entire image available in the editor; framing controls do not change intrinsic preview size. */
+#yearbookEditorDialog #imageFit,#yearbookEditorDialog #resetPhotoFraming{width:100%;min-height:44px;font:400 16px/1.35 Nunito,Arial,sans-serif}
+#yearbookEditorDialog .yearbook-preview-viewport{min-width:0;max-height:100%;align-items:center;justify-items:center}
+#yearbookEditorDialog .yearbook-preview-viewport canvas{display:block;max-width:100%!important;max-height:100%!important;height:auto!important;width:auto!important;object-fit:contain}
+#yearbookEditorDialog #cropZoomLevel{font:400 16px/1.4 Nunito,Arial,sans-serif;color:#fff8e9}
+@media(min-width:701px){#yearbookEditorDialog .yearbook-preview-viewport{max-height:min(60dvh,650px)}}
 /* Official VNV header and utility dock are owned by canonical ecosystem scripts.
    Keep Yearbook-specific selectors scoped to avoid competing UI layers. */
 .yearbook-footer{box-sizing:border-box;width:100%;margin:24px 0 0;padding:20px 16px 90px;text-align:center;background:#243038;color:#fff8e9;border-top:1px solid #b48b45;font:400 16px/1.6 "Brandon Grotesque",Nunito,Arial,sans-serif}
@@ -281,7 +288,9 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
           </select>
         </div>
       </div>
-      <div class="field"><label for="zoom">Crop zoom</label><input id="zoom" type="range" min="1" max="3" step=".01" value="1"></div>
+      <div class="field"><label for="imageFit">Photo layout</label><select id="imageFit"><option value="contain">Fit Entire Image — no clipping</option><option value="cover">Fill Frame — crop edges</option></select></div>
+<div class="field"><label for="zoom">Photo crop zoom <output id="cropZoomLevel">100%</output></label><input id="zoom" type="range" min="1" max="3" step=".01" value="1"></div>
+<button id="resetPhotoFraming" class="btn" type="button">Show Entire Photo</button>
       <div class="field"><label for="panX">Move image left / right</label><input id="panX" type="range" min="-100" max="100" value="0"></div>
       <div class="field"><label for="panY">Move image up / down</label><input id="panY" type="range" min="-100" max="100" value="0"></div>
       <p class="hint">Crop zoom changes the saved photo; preview zoom only magnifies the editing view.</p>
@@ -346,7 +355,7 @@ async function put(photo){return transaction("readwrite",s=>s.put(photo));}
 async function remove(id){return transaction("readwrite",s=>s.delete(id));}
 function uid(){return "p_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,8);}
 function escapeHTML(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function defaults(data){return {id:uid(),data,caption:"",color:"#c9a86a",design:"classic",zoom:1,panX:0,panY:0,position:photos.length};}
+function defaults(data){return {id:uid(),data,caption:"",color:"#c9a86a",design:"classic",fit:"contain",zoom:1,panX:0,panY:0,position:photos.length};}
 
 function renderGrid(){
   const grid=$("photoGrid");grid.innerHTML="";
@@ -387,18 +396,18 @@ $("viewZoomIn").addEventListener("click",()=>{$("viewZoom").value=String(clamp(N
 function fillEditor(){
   $("noSelection").hidden=true;$("editor").hidden=false;
   $("caption").value=draft.caption||"";$("frameColor").value=draft.color||"#c9a86a";
-  $("frameDesign").value=draft.design||"classic";$("zoom").value=draft.zoom||1;
-  $("panX").value=draft.panX||0;$("panY").value=draft.panY||0;$("viewZoom").value="1";updatePreviewZoom();drawPreview();setStatus("");
+  $("frameDesign").value=draft.design||"classic";$("imageFit").value=draft.fit==="contain"?"contain":"cover";$("zoom").value=draft.zoom||1;
+  $("panX").value=draft.panX||0;$("panY").value=draft.panY||0;$("viewZoom").value="1";updatePreviewZoom();drawPreview();$("cropZoomLevel").textContent=Math.round(Number($("zoom").value)*100)+"%";setStatus("");
 }
-function cropRect(img,w,h,zoom,panX,panY){
-  const base=Math.max(w/img.width,h/img.height),scale=base*clamp(Number(zoom)||1,1,3);
+function cropRect(img,w,h,zoom,panX,panY,fit){
+  const base=(fit==="contain"?Math.min(w/img.width,h/img.height):Math.max(w/img.width,h/img.height)),scale=base*clamp(Number(zoom)||1,1,3);
   const dw=img.width*scale,dh=img.height*scale;
   const overflowX=Math.max(0,dw-w),overflowY=Math.max(0,dh-h);
   return {x:(w-dw)/2+(clamp(panX,-100,100)/100)*(overflowX/2),y:(h-dh)/2+(clamp(panY,-100,100)/100)*(overflowY/2),w:dw,h:dh};
 }
 function drawPhoto(ctx,p,img,w,h,withFrame=true){
   ctx.clearRect(0,0,w,h);ctx.fillStyle="#111";ctx.fillRect(0,0,w,h);
-  const r=cropRect(img,w,h,Number(p.zoom)||1,Number(p.panX)||0,Number(p.panY)||0);
+  const r=cropRect(img,w,h,Number(p.zoom)||1,Number(p.panX)||0,Number(p.panY)||0,p.fit);
   ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();ctx.drawImage(img,r.x,r.y,r.w,r.h);ctx.restore();
   if(withFrame){
     const c=p.color||"#c9a86a";ctx.save();ctx.strokeStyle=c;ctx.lineWidth=p.design==="minimal"?5:18;
@@ -416,10 +425,15 @@ function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect?ctx.roundRect(x,
 function drawPreview(){if(!draft||!sourceImage)return;drawPhoto($("preview").getContext("2d"),draft,sourceImage,600,750,true);}
 function setStatus(msg){$("status").textContent=msg;}
 function updateDraft(){
-  if(!draft)return;draft.caption=$("caption").value;draft.color=$("frameColor").value;draft.design=$("frameDesign").value;
-  draft.zoom=Number($("zoom").value);draft.panX=Number($("panX").value);draft.panY=Number($("panY").value);drawPreview();
+  if(!draft)return;draft.caption=$("caption").value;draft.color=$("frameColor").value;draft.design=$("frameDesign").value;draft.fit=$("imageFit").value;
+  draft.zoom=Number($("zoom").value);draft.panX=Number($("panX").value);draft.panY=Number($("panY").value);$("cropZoomLevel").textContent=Math.round(draft.zoom*100)+"%";drawPreview();
 }
-["caption","frameColor","frameDesign","zoom","panX","panY"].forEach(id=>$(id).addEventListener("input",updateDraft));
+["caption","frameColor","frameDesign","imageFit","zoom","panX","panY"].forEach(id=>$(id).addEventListener("input",updateDraft));
+$("resetPhotoFraming").addEventListener("click",()=>{
+ if(!draft)return;
+ $("imageFit").value="contain";$("zoom").value="1";$("panX").value="0";$("panY").value="0";
+ $("viewZoom").value="1";updatePreviewZoom();updateDraft();
+});
 $("saveEdit").addEventListener("click",async()=>{if(!draft||!db)return;updateDraft();try{await put(draft);photos=sortPhotos(await getAll());renderGrid();setStatus("Edits saved on this device.");}catch(error){setStatus("Save failed. Keep a backup: "+error.message);}});
 async function optimizePhoto(file){
  if(!supportedImage(file.type))throw new Error("Unsupported format: "+file.name);
@@ -442,15 +456,20 @@ async function addFiles(files){
  if(!db)throw new Error("Browser storage has not opened.");
  const chosen=[...files],room=MAX_PHOTOS-photos.length;
  if(chosen.length>room)setStatus("The Yearbook has space for "+room+" more photo(s).");
- let added=0;
+ let added=0,firstAddedId=null,failed=0;
  for(const file of chosen.slice(0,room)){
-   try{const data=await optimizePhoto(file);const p=defaults(data);p.position=photos.length;await put(p);photos.push(p);added++;}
-   catch(error){setStatus("Some photos could not be added: "+error.message);}
+  try{
+   const data=await optimizePhoto(file),p=defaults(data);
+   p.position=photos.length;await put(p);photos.push(p);
+   if(firstAddedId===null)firstAddedId=p.id;
+   added++;
+  }catch(error){failed++;setStatus("Photo upload failed: "+error.message);}
  }
- sortPhotos(photos);renderGrid();
- if(added>0&&pendingSlot!==null){selectPhoto(photos[photos.length-1].id);}
- pendingSlot=null;
- if(added>0)setStatus(added+" photo(s) added and saved on this browser. Export a backup regularly.");
+ sortPhotos(photos);renderGrid();pendingSlot=null;
+ if(firstAddedId){
+  setStatus(added+" photo(s) uploaded. The first new photo is open for editing."+(failed?" "+failed+" upload(s) failed.":""));
+  selectPhoto(firstAddedId);
+ }
 }
 $("addBtn").addEventListener("click",()=>{pendingSlot=null;$("fileInput").click();});
 $("fileInput").addEventListener("change",async e=>{try{if(e.target.files.length)await addFiles(e.target.files);}catch(error){setStatus("Upload failed: "+error.message);}finally{e.target.value="";}});
@@ -491,7 +510,7 @@ function validatedImport(raw){
   safe.push({id,data:item.data,caption:String(item.caption||"").slice(0,90),
     color:/^#[0-9a-f]{6}$/i.test(item.color)?item.color:"#c9a86a",
     design:["classic","double","dashed","soft","minimal","film"].includes(item.design)?item.design:"classic",
-    zoom:clamp(Number(item.zoom)||1,1,3),panX:clamp(Number(item.panX)||0,-100,100),
+    fit:item.fit==="contain"?"contain":"cover",zoom:clamp(Number(item.zoom)||1,1,3),panX:clamp(Number(item.panX)||0,-100,100),
     panY:clamp(Number(item.panY)||0,-100,100),position:safe.length});
  }
  return safe;
