@@ -98,6 +98,42 @@ h1,.side h2{font-family:Cinzel,Georgia,serif;font-weight:400}
 @media(max-width:560px){.photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.shell{padding:12px}.panel{padding:12px}}
 @media print{body{background:#fff}.yearbook-private-note{display:none!important}}
 
+
+/* Canonical Yearbook: compact editing toolbar anchored above the right-hand editor. */
+.yearbook-controls-column{display:flex;flex-direction:column;gap:12px;min-width:0}
+.yearbook-controls-column .yearbook-action-banner{
+ width:100%;padding:16px;box-sizing:border-box;
+ background:#243038;border:1px solid #b48b45;border-radius:7px;
+}
+.yearbook-action-banner h2{margin:0 0 5px;color:#fff8e9;text-align:center;font:400 22px/1.3 Cinzel,Georgia,serif}
+.yearbook-action-banner .yearbook-tools-description{margin:0 0 14px;color:#e3dac6;text-align:center;font:400 16px/1.4 "Brandon Grotesque",Nunito,Arial,sans-serif}
+.yearbook-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.yearbook-action-grid .btn,
+.yearbook-action-grid .btn.primary,
+.yearbook-action-grid .btn.subtle{
+ display:flex;align-items:center;justify-content:center;
+ width:100%;min-width:0;min-height:55px;box-sizing:border-box;
+ padding:10px 9px;margin:0;border:1px solid #d5b77b;border-radius:7px;
+ background:#fff8e9;color:#243038;-webkit-text-fill-color:#243038;
+ font:400 16px/1.3 "Brandon Grotesque",Nunito,Arial,sans-serif;
+ text-align:center;white-space:normal;overflow-wrap:break-word;
+}
+.yearbook-action-grid .btn.primary{background:#e6d2a9}
+.yearbook-action-grid .btn:is(:hover,:focus-visible):not(:disabled){background:#ecd9b8;color:#243038;-webkit-text-fill-color:#243038}
+.yearbook-action-grid .btn:disabled{opacity:.55;cursor:not-allowed}
+.yearbook-action-grid .btn:focus-visible{outline:3px solid #d5b77b;outline-offset:2px}
+.yearbook-photo-counter{display:block;margin:12px 0 0;padding:7px 0;text-align:center;color:#fff8e9;font:400 16px/1.3 "Brandon Grotesque",Nunito,Arial,sans-serif}
+.yearbook-editor-panel{width:100%;box-sizing:border-box;min-width:0}
+.yearbook-editor-panel h2{text-align:center}
+@media(max-width:850px){
+ .layout{grid-template-columns:1fr}
+ .yearbook-controls-column{order:-1}
+ .yearbook-action-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:640px){.yearbook-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:380px){.yearbook-action-grid{grid-template-columns:1fr}}
+@media print{.yearbook-controls-column{display:none!important}}
+
 </style>
 </head>
 <body>
@@ -112,21 +148,26 @@ h1,.side h2{font-family:Cinzel,Georgia,serif;font-weight:400}
 <p class="yearbook-app-status" id="status" role="status" aria-live="polite">Your yearbook is opening. Photos stay on this browser unless you export a backup.</p>
 <div class="layout">
   <main class="panel">
-    <div class="toolbar">
-      <button class="btn primary" id="addBtn" disabled>＋ Add photos</button>
-      <button class="btn" id="exportBtn">Export project</button>
-      <button class="btn" id="importBtn">Import project</button>
-      <button class="btn subtle" id="printBtn">Print yearbook</button>
-      <span class="counter" id="counter">0 / 50 photos</span>
-    </div>
-    <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple aria-label="Choose up to 50 yearbook photos">
-    <input id="projectInput" type="file" accept="application/json,.json" aria-label="Import saved yearbook backup">
     <div class="grid-wrap"><div class="photo-grid" id="photoGrid"></div></div>
     <p class="hint">Select any photo to edit it. Images are resized locally for storage. Gallery previews match saved cropping and frames. Export a JSON backup before changing browsers or clearing browser data.</p>
   </main>
 
-  <aside class="panel side">
-    <h2>Photo editor</h2>
+  <aside class="side yearbook-controls-column" aria-label="Yearbook editing tools">
+    <section class="panel yearbook-action-banner" aria-labelledby="yearbookToolsTitle">
+      <h2 id="yearbookToolsTitle">Yearbook Tools</h2>
+      <p class="yearbook-tools-description">Create, save and share your memories.</p>
+      <div class="yearbook-action-grid" role="group" aria-label="Yearbook actions">
+        <button class="btn primary" id="addBtn" disabled>＋ Add Photos</button>
+        <button class="btn" id="exportBtn">Export Project</button>
+        <button class="btn" id="importBtn">Import Project</button>
+        <button class="btn subtle" id="printBtn">Print Yearbook</button>
+      </div>
+      <span class="counter yearbook-photo-counter" id="counter">0 / 50 photos</span>
+      <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple aria-label="Choose up to 50 yearbook photos">
+      <input id="projectInput" type="file" accept="application/json,.json" aria-label="Import saved yearbook backup">
+    </section>
+    <section class="panel yearbook-editor-panel" aria-labelledby="yearbookPhotoEditorTitle">
+    <h2 id="yearbookPhotoEditorTitle">Photo Editor</h2>
     <div id="noSelection" class="empty-state">Choose an empty frame to add a photo, or select a photo to edit its crop, frame and caption.</div>
     <div id="editor" hidden>
       <div class="preview"><canvas id="preview" width="600" height="750"></canvas></div>
@@ -152,6 +193,7 @@ h1,.side h2{font-family:Cinzel,Georgia,serif;font-weight:400}
       </div>
 
     </div>
+    </section>
   </aside>
 </div>
 <footer>Private by design · Offline-ready · No accounts · No external libraries</footer>
