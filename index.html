@@ -20,7 +20,7 @@ body{margin:0;background:radial-gradient(ellipse at top,#27251f 0,#111214 58%);c
 button,input,select,textarea{font:inherit}
 button{cursor:pointer}
 .shell{max-width:1200px;margin:auto;padding:22px}
-header{text-align:center;padding:14px 0 22px}
+.yearbook-hero{text-align:center;padding:14px 0 22px}
 .eyebrow{color:var(--gold);letter-spacing:.24em;text-transform:uppercase;font-size:11px}
 h1{font-family:Georgia,serif;font-weight:500;letter-spacing:.06em;font-size:clamp(27px,5vw,42px);margin:7px 0}
 .sub{color:var(--muted);margin:0}
@@ -64,7 +64,7 @@ input[type=file]{display:none}
 @media(max-width:560px){.shell{padding:12px}.photo-grid{gap:8px}.panel{padding:12px}.tile-tools button{font-size:10px;padding:5px}.counter{width:100%;margin-left:0}}
 @media print{
  body{background:#fff;color:#111}.shell{max-width:none;padding:0}.layout{display:block}.panel{background:#fff;border:0;box-shadow:none;padding:0}
- header{padding:0 0 12px}h1,.eyebrow,.sub{color:#111}.toolbar,.tile-tools,.hint,.status,footer{display:none!important}
+ .yearbook-hero{padding:0 0 12px}h1,.eyebrow,.sub{color:#111}.toolbar,.tile-tools,.hint,.status,footer{display:none!important}
  .grid-wrap{max-height:none;overflow:visible}.photo-grid{grid-template-columns:repeat(3,1fr);gap:10mm}
  .photo-card{break-inside:avoid;border-color:var(--frame)!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
  .tile{break-inside:avoid}.print-title{display:block}
@@ -155,11 +155,17 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
 @media(max-width:560px){.photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#yearbookEditorDialog{width:calc(100vw - 12px);height:95dvh;max-height:95dvh}#yearbookEditorDialog .yearbook-dialog-body{padding:10px}}
 @media print{.yearbook-gallery-actions,#yearbookEditorDialog{display:none!important}.yearbook-gallery-panel .photo-grid{grid-template-columns:repeat(3,1fr)}}
 
+/* Official VNV header and utility dock are owned by canonical ecosystem scripts.
+   Keep Yearbook-specific selectors scoped to avoid competing UI layers. */
+.yearbook-footer{box-sizing:border-box;width:100%;margin:24px 0 0;padding:20px 16px 90px;text-align:center;background:#243038;color:#fff8e9;border-top:1px solid #b48b45;font:400 16px/1.6 "Brandon Grotesque",Nunito,Arial,sans-serif}
+.yearbook-footer div{margin:2px auto}
+#vnvHeaderAutoPopulate{font-size:16px}
+@media print{.yearbook-footer,#vnvHeaderAutoPopulate,#vnvEnrichedMenuOverlay,#vnvEcosystemUtilityDock{display:none!important}}
 </style>
 </head>
-<body>
+<body data-vnv-header-title="My School Yearbook" data-vnv-header-subtitle="Khaemenes Academy · Student Creative Studio" data-vnv-header-home="https://vervenveda.com/Academy-Yearbook.github.io/">
 <div class="shell">
-<header>
+<header class="yearbook-hero">
   <div class="eyebrow">Khaemenes Academy · Student Creative Studio</div>
   <h1>My School Yearbook</h1>
   <p class="sub">A year of moments, friendships, discoveries and memories.</p>
@@ -235,7 +241,7 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
     </div>
   </div>
 </dialog>
-<footer>Private by design · Offline-ready · No accounts · No external libraries</footer>
+<footer class="yearbook-footer"><div>Verve N Veda · Khaemenes Academy</div><div>My School Yearbook · Private by design · Local photos · Export backups</div></footer>
 </div>
 
 <script>
@@ -439,6 +445,25 @@ async function init(){
   catch(e){$("addBtn").disabled=true;$("photoGrid").innerHTML='<div class="empty-state">Local photo storage could not be opened in this browser. Try a current browser with IndexedDB enabled.</div>';setStatus(e.message);}
 }
 init();
+})();
+</script>
+<script src="https://vervenveda.com/assets/vnv-header-autopopulate.js"></script>
+<script src="https://vervenveda.com/assets/vnv-ecosystem-toolbar.js"></script>
+<script>
+/* Idempotent: canonical header engine owns its hamburger and enriched menu. */
+(function(){
+ const mount=()=>{if(window.VNV_HEADER?.mount)window.VNV_HEADER.mount({
+  title:"My School Yearbook",
+  subtitle:"Khaemenes Academy · Student Creative Studio",
+  home:"https://vervenveda.com/Academy-Yearbook.github.io/",
+  icon:"Y",
+  actions:[
+   {label:"Academy",href:"https://vervenveda.com/Khaemenes_Academy.github.io/"},
+   {label:"Student",href:"https://vervenveda.com/Khaemenes_Academy.github.io/student/"},
+   {label:"Yearbook",href:"https://vervenveda.com/Academy-Yearbook.github.io/"}
+  ]
+ })};
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mount,{once:true});else mount();
 })();
 </script>
 </body>
