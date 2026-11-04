@@ -156,37 +156,42 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
 @media print{.yearbook-gallery-actions,#yearbookEditorDialog{display:none!important}.yearbook-gallery-panel .photo-grid{grid-template-columns:repeat(3,1fr)}}
 
 
-/* Yearbook editor workspace: fixed preview at left, independent controls at right.
-   These rules are scoped to the modal; the public gallery stays full-width. */
+/* Yearbook workspace — one editor; panoramic preview, control deck beneath. */
 @media(min-width:701px){
- #yearbookEditorDialog{width:min(1050px,calc(100vw - 24px));max-width:1050px;height:min(94dvh,900px);max-height:94dvh}
- #yearbookEditorDialog .yearbook-dialog-body{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:hidden;padding:12px 16px}
- #yearbookEditorDialog .yearbook-controls-column{display:flex;flex:1;min-height:0;flex-direction:column;gap:10px}
- #yearbookEditorDialog .yearbook-action-banner{flex:0 0 auto;padding:10px 14px}
+ #yearbookEditorDialog{width:min(1120px,calc(100vw - 24px));max-width:none;height:min(96dvh,1000px);max-height:96dvh}
+ #yearbookEditorDialog .yearbook-dialog-body{display:flex;flex-direction:column;min-height:0;overflow-y:auto;overflow-x:hidden;gap:10px;padding:12px 16px}
+ #yearbookEditorDialog .yearbook-controls-column{display:flex;flex-direction:column;gap:10px;min-height:0}
+ #yearbookEditorDialog .yearbook-action-banner{padding:9px 12px}
  #yearbookEditorDialog .yearbook-action-banner h2{font-size:18px;margin-bottom:2px}
- #yearbookEditorDialog .yearbook-tools-description{margin:0 0 8px}
+ #yearbookEditorDialog .yearbook-tools-description{margin:0 0 6px}
  #yearbookEditorDialog .yearbook-action-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
- #yearbookEditorDialog .yearbook-action-grid .btn{min-height:40px;padding:7px 8px}
- #yearbookEditorDialog .yearbook-photo-counter{margin:5px 0 0;padding:0}
- #yearbookEditorDialog .yearbook-editor-panel{display:flex;flex:1;min-height:0;flex-direction:column;padding:12px}
- #yearbookEditorDialog .yearbook-editor-panel h2{margin:0 0 8px}
- #yearbookEditorDialog #editor:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,330px);gap:14px;flex:1;min-height:0;align-items:stretch}
- #yearbookEditorDialog .yearbook-preview-pane{min-height:0;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
- #yearbookEditorDialog .yearbook-preview-pane canvas{width:auto;max-width:100%;height:auto;max-height:calc(94dvh - 290px);object-fit:contain}
- #yearbookEditorDialog .yearbook-preview-caption{text-align:center;color:#e0d7c5;margin:7px 0 0;font-size:16px}
- #yearbookEditorDialog .yearbook-edit-controls{min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:2px 9px 10px 2px;scrollbar-gutter:stable}
- #yearbookEditorDialog .yearbook-edit-controls .field{margin:6px 0 10px}
- #yearbookEditorDialog .yearbook-edit-controls .toolbar{position:sticky;bottom:0;z-index:1;margin:10px 0 0;padding:9px 0 0;display:grid;grid-template-columns:1fr;gap:7px;background:#202d2c;border-top:1px solid #887552}
- #yearbookEditorDialog .yearbook-edit-controls .toolbar button{width:100%}
+ #yearbookEditorDialog .yearbook-action-grid .btn{min-height:40px}
+ #yearbookEditorDialog .yearbook-photo-counter{margin:3px 0 0}
+ #yearbookEditorDialog .yearbook-editor-panel{padding:12px;display:block}
+ #yearbookEditorDialog .yearbook-editor-panel h2{margin:0 0 7px}
+ #yearbookEditorDialog #editor:not([hidden]){display:flex;flex-direction:column;gap:12px;align-items:stretch}
+ #yearbookEditorDialog .yearbook-preview-pane{display:flex;flex-direction:column;align-items:center;margin:0;min-height:0;overflow:hidden}
+ #yearbookEditorDialog .yearbook-preview-viewport{flex:0 0 auto;min-height:0;height:min(54dvh,550px);width:100%;max-height:none;overflow:hidden}
+ #yearbookEditorDialog .yearbook-edit-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;overflow:visible;min-width:0;padding:6px}
+ #yearbookEditorDialog .yearbook-edit-controls .field{margin:0}
+ #yearbookEditorDialog .yearbook-edit-controls>.row{display:contents}
+ #yearbookEditorDialog .yearbook-edit-controls .toolbar{position:static;grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;background:none;border-top:1px solid #887552;padding:11px 0 0;margin:0}
+ #yearbookEditorDialog .yearbook-edit-controls .toolbar button{width:100%;min-width:0}
+ #yearbookEditorDialog .yearbook-edit-controls>.hint{grid-column:1/-1;margin:0}
+ #yearbookEditorDialog .yearbook-nudge-controls{grid-column:1/-1}
  #yearbookEditorDialog .yearbook-future-tools{display:none}
 }
 @media(max-width:700px){
- #yearbookEditorDialog .yearbook-preview-pane{margin-bottom:12px}
- #yearbookEditorDialog .yearbook-preview-caption{font-size:16px;text-align:center}
- #yearbookEditorDialog .yearbook-edit-controls .toolbar{display:grid;grid-template-columns:1fr;gap:8px}
+ #yearbookEditorDialog .yearbook-preview-pane{margin-bottom:8px}
+ #yearbookEditorDialog .yearbook-preview-viewport{height:min(45dvh,390px);flex:none}
+ #yearbookEditorDialog .yearbook-edit-controls .toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
  #yearbookEditorDialog .yearbook-edit-controls .toolbar button{width:100%}
 }
-
+.yearbook-nudge-controls{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:7px;border:1px solid #887552;border-radius:7px}
+.yearbook-nudge-controls .btn{min-width:62px;min-height:44px}
+.yearbook-nudge-controls span{font-size:16px}
+#yearbookEditorDialog .yearbook-preview-viewport{background:#14191b}
+#yearbookEditorDialog .yearbook-preview-viewport canvas{max-height:100%!important;max-width:100%!important;object-fit:contain}
 
 /* Canonical navigation chrome spans the viewport, not the bounded gallery. */
 #vnv333NetworkTicker,#vnvTickerAutoPopulate,#vnvHeaderAutoPopulate{box-sizing:border-box!important;width:100vw!important;max-width:none!important;margin-left:calc(50% - 50vw)!important;margin-right:0!important}
@@ -220,7 +225,7 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
 #yearbookEditorDialog .yearbook-preview-viewport{min-width:0;max-height:100%;align-items:center;justify-items:center}
 #yearbookEditorDialog .yearbook-preview-viewport canvas{display:block;max-width:100%!important;max-height:100%!important;height:auto!important;width:auto!important;object-fit:contain}
 #yearbookEditorDialog #cropZoomLevel{font:400 16px/1.4 Nunito,Arial,sans-serif;color:#fff8e9}
-@media(min-width:701px){#yearbookEditorDialog .yearbook-preview-viewport{max-height:min(60dvh,650px)}}
+/* Preview height is owned by the single editor layout above. */
 /* Official VNV header and utility dock are owned by canonical ecosystem scripts.
    Keep Yearbook-specific selectors scoped to avoid competing UI layers. */
 .yearbook-footer{box-sizing:border-box;width:100%;margin:24px 0 0;padding:20px 16px 90px;text-align:center;background:#243038;color:#fff8e9;border-top:1px solid #b48b45;font:400 16px/1.6 "Brandon Grotesque",Nunito,Arial,sans-serif}
@@ -293,6 +298,7 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
 <button id="resetPhotoFraming" class="btn" type="button">Show Entire Photo</button>
       <div class="field"><label for="panX">Move image left / right</label><input id="panX" type="range" min="-100" max="100" value="0"></div>
       <div class="field"><label for="panY">Move image up / down</label><input id="panY" type="range" min="-100" max="100" value="0"></div>
+      <div class="yearbook-nudge-controls" aria-label="Position photograph"><span>Move image</span><button class="btn" type="button" data-yearbook-move="left">← Left</button><button class="btn" type="button" data-yearbook-move="right">Right →</button><button class="btn" type="button" data-yearbook-move="up">↑ Up</button><button class="btn" type="button" data-yearbook-move="down">Down ↓</button><button class="btn" type="button" id="centerPhoto">Center</button></div>
       <p class="hint">Crop zoom changes the saved photo; preview zoom only magnifies the editing view.</p>
       <div class="toolbar">
         <button class="btn primary" id="saveEdit">Save edits</button>
@@ -402,8 +408,9 @@ function fillEditor(){
 function cropRect(img,w,h,zoom,panX,panY,fit){
   const base=(fit==="contain"?Math.min(w/img.width,h/img.height):Math.max(w/img.width,h/img.height)),scale=base*clamp(Number(zoom)||1,1,3);
   const dw=img.width*scale,dh=img.height*scale;
-  const overflowX=Math.max(0,dw-w),overflowY=Math.max(0,dh-h);
-  return {x:(w-dw)/2+(clamp(panX,-100,100)/100)*(overflowX/2),y:(h-dh)/2+(clamp(panY,-100,100)/100)*(overflowY/2),w:dw,h:dh};
+  // Allow movement inside the letterbox for fit mode; in crop mode pan visible overflow.
+  const travelX=Math.abs(dw-w),travelY=Math.abs(dh-h);
+  return {x:(w-dw)/2+(clamp(Number(panX)||0,-100,100)/100)*(travelX/2),y:(h-dh)/2+(clamp(Number(panY)||0,-100,100)/100)*(travelY/2),w:dw,h:dh};
 }
 function drawPhoto(ctx,p,img,w,h,withFrame=true){
   ctx.clearRect(0,0,w,h);ctx.fillStyle="#111";ctx.fillRect(0,0,w,h);
@@ -429,6 +436,13 @@ function updateDraft(){
   draft.zoom=Number($("zoom").value);draft.panX=Number($("panX").value);draft.panY=Number($("panY").value);$("cropZoomLevel").textContent=Math.round(draft.zoom*100)+"%";drawPreview();
 }
 ["caption","frameColor","frameDesign","imageFit","zoom","panX","panY"].forEach(id=>$(id).addEventListener("input",updateDraft));
+document.querySelectorAll("[data-yearbook-move]").forEach(button=>button.addEventListener("click",()=>{
+ if(!draft)return;
+ const direction=button.dataset.yearbookMove,axis=(direction==="left"||direction==="right")?"panX":"panY";
+ const delta=(direction==="left"||direction==="up")?-12:12;
+ $(axis).value=String(clamp(Number($(axis).value)+delta,-100,100));updateDraft();
+}));
+$("centerPhoto").addEventListener("click",()=>{if(!draft)return;$("panX").value="0";$("panY").value="0";updateDraft()});
 $("resetPhotoFraming").addEventListener("click",()=>{
  if(!draft)return;
  $("imageFit").value="contain";$("zoom").value="1";$("panX").value="0";$("panY").value="0";
