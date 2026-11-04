@@ -31,7 +31,7 @@ h1{font-family:Georgia,serif;font-weight:500;letter-spacing:.06em;font-size:clam
 .photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
 .tile{min-width:0;position:relative}
 .photo-card{aspect-ratio:4/5;border:5px solid var(--frame,#c9a86a);border-radius:var(--radius,8px);background:#101114;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.photo-card img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-card img,.photo-card .gallery-preview{width:100%;height:100%;object-fit:cover;display:block}
 .photo-card.empty{border-style:dashed;color:#8f8a80;flex-direction:column;gap:7px;background:linear-gradient(145deg,#25272b,#151619)}
 .photo-card.empty .plus{font-size:32px;color:var(--gold);line-height:1}
 .photo-card.selected{outline:2px solid #f4e2b7;outline-offset:3px}
@@ -101,7 +101,7 @@ h1,.side h2{font-family:Cinzel,Georgia,serif;font-weight:400}
   <p class="sub">A year of moments, friendships, discoveries and memories.</p>
 </header>
 
-<p class="yearbook-private-note">Your yearbook photos stay in this browser’s Yearbook Studio storage. This version does not synchronize with individual Academy learner profiles. Export a project backup to preserve your work.</p>
+<p class="yearbook-private-note">Your yearbook is private to this browser profile and is not yet connected to individual Academy learner accounts. You can export and import backups. Only add photographs you have permission to use.</p>
 <div class="layout">
   <main class="panel">
     <div class="toolbar">
@@ -114,7 +114,7 @@ h1,.side h2{font-family:Cinzel,Georgia,serif;font-weight:400}
     <input id="fileInput" type="file" accept="image/*" multiple>
     <input id="projectInput" type="file" accept="application/json,.json">
     <div class="grid-wrap"><div class="photo-grid" id="photoGrid"></div></div>
-    <p class="hint">Select a photo to edit it. The grid holds up to 50 images and scrolls as your collection grows. Your work stays in this browser unless you export a project backup.</p>
+    <p class="hint">Select any photo to edit it. Images are resized locally for storage. Gallery previews match saved cropping and frames. Export a JSON backup before changing browsers or clearing browser data.</p>
   </main>
 
   <aside class="panel side">
@@ -155,6 +155,11 @@ h1,.side h2{font-family:Cinzel,Georgia,serif;font-weight:400}
 const MAX_PHOTOS=50, DB_NAME="KhaemenesYearbook", DB_VERSION=1, STORE="photos";
 const $=id=>document.getElementById(id);
 let db, photos=[], selectedId=null, draft=null, sourceImage=null;
+let selectionToken=0, pendingSlot=null;
+const MAX_UPLOAD_BYTES=20*1024*1024, MAX_IMPORT_BYTES=55*1024*1024;
+const supportedImage=type=>["image/jpeg","image/png","image/webp","image/gif"].includes(type);
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const sortPhotos=list=>list.sort((a,b)=>(Number.isInteger(a.position)?a.position:100000)-(Number.isInteger(b.position)?b.position:100000)||String(a.id).localeCompare(String(b.id)));
 
 function openDB(){
   return new Promise((resolve,reject)=>{
@@ -178,7 +183,7 @@ async function put(photo){return transaction("readwrite",s=>s.put(photo));}
 async function remove(id){return transaction("readwrite",s=>s.delete(id));}
 function uid(){return "p_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,8);}
 function escapeHTML(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function defaults(data){return {id:uid(),data,caption:"",color:"#c9a86a",design:"classic",zoom:1,panX:0,panY:0};}
+function defaults(data){return {id:uid(),data,caption:"",color:"#c9a86a",design:"classic",zoom:1,panX:0,panY:0,position:photos.length};}
 
 function renderGrid(){
   const grid=$("photoGrid");grid.innerHTML="";
@@ -189,7 +194,8 @@ function renderGrid(){
     if(p){
       card.style.setProperty("--frame",p.color||"#c9a86a");
       card.style.setProperty("--radius",p.design==="soft"?"18px":"7px");
-      const img=document.createElement("img");img.src=p.data;img.alt=p.caption||`Yearbook photo ${i+1}`;card.appendChild(img);
+      const canvas=document.createElement("canvas");canvas.width=320;canvas.height=400;canvas.className="gallery-preview";canvas.setAttribute("role","img");canvas.setAttribute("aria-label",p.caption||`Yearbook photo ${i+1}`);card.appendChild(canvas);
+      loadImage(p.data).then(img=>{if(canvas.isConnected)drawPhoto(canvas.getContext("2d"),p,img,320,400,true);}).catch(()=>{canvas.setAttribute("aria-label","Image unavailable");});
       const num=document.createElement("span");num.className="number";num.textContent=String(i+1).padStart(2,"0");card.appendChild(num);
       if(p.caption){const cap=document.createElement("div");cap.className="mini-caption";cap.textContent=p.caption;card.appendChild(cap);}
     }else{const plus=document.createElement("div");plus.className="plus";plus.textContent="+";card.appendChild(plus);const label=document.createElement("span");label.textContent="Add memory";card.appendChild(label);}
@@ -202,11 +208,11 @@ function renderGrid(){
   }
   $("addBtn").disabled=photos.length>=MAX_PHOTOS;
 }
-let pendingSlot=null;
 function chooseForSlot(slot){pendingSlot=slot;$("fileInput").click();}
 function selectPhoto(id){
   selectedId=id;const p=photos.find(x=>x.id===id);if(!p)return;
-  draft=structuredCloneSafe(p);loadImage(draft.data).then(img=>{sourceImage=img;fillEditor();renderGrid();}).catch(()=>setStatus("Could not load this image."));
+  const ticket=++selectionToken;
+  draft=structuredCloneSafe(p);loadImage(draft.data).then(img=>{if(ticket!==selectionToken)return;sourceImage=img;fillEditor();renderGrid();}).catch(()=>{if(ticket===selectionToken)setStatus("Could not load this image.");});
 }
 function structuredCloneSafe(x){return JSON.parse(JSON.stringify(x));}
 function loadImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src;});}
@@ -217,10 +223,10 @@ function fillEditor(){
   $("panX").value=draft.panX||0;$("panY").value=draft.panY||0;drawPreview();setStatus("");
 }
 function cropRect(img,w,h,zoom,panX,panY){
-  const base=Math.max(w/img.width,h/img.height),scale=base*zoom;
+  const base=Math.max(w/img.width,h/img.height),scale=base*clamp(Number(zoom)||1,1,3);
   const dw=img.width*scale,dh=img.height*scale;
   const overflowX=Math.max(0,dw-w),overflowY=Math.max(0,dh-h);
-  return {x:(w-dw)/2+(panX/100)*(overflowX/2),y:(h-dh)/2+(panY/100)*(overflowY/2),w:dw,h:dh};
+  return {x:(w-dw)/2+(clamp(panX,-100,100)/100)*(overflowX/2),y:(h-dh)/2+(clamp(panY,-100,100)/100)*(overflowY/2),w:dw,h:dh};
 }
 function drawPhoto(ctx,p,img,w,h,withFrame=true){
   ctx.clearRect(0,0,w,h);ctx.fillStyle="#111";ctx.fillRect(0,0,w,h);
@@ -236,7 +242,7 @@ function drawPhoto(ctx,p,img,w,h,withFrame=true){
     if(p.design==="classic"){ctx.lineWidth=2;ctx.strokeRect(22,22,w-44,h-44);}
     ctx.restore();
   }
-  if(p.caption){ctx.save();ctx.fillStyle="#000a";ctx.fillRect(0,h-65,w,65);ctx.fillStyle="#fff";ctx.font=`${Math.max(18,w*.035)}px Georgia`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(p.caption.slice(0,90),w/2,h-32,w-35);ctx.restore();}
+  if(p.caption){ctx.save();const barH=Math.max(42,h*.087);ctx.fillStyle="#000a";ctx.fillRect(0,h-barH,w,barH);ctx.fillStyle="#fff";ctx.font=`${Math.max(12,w*.035)}px Georgia`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(String(p.caption).slice(0,90),w/2,h-barH/2,w-35);ctx.restore();}
 }
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,r):(ctx.rect(x,y,w,h));}
 function drawPreview(){if(!draft||!sourceImage)return;drawPhoto($("preview").getContext("2d"),draft,sourceImage,600,750,true);}
@@ -246,42 +252,95 @@ function updateDraft(){
   draft.zoom=Number($("zoom").value);draft.panX=Number($("panX").value);draft.panY=Number($("panY").value);drawPreview();
 }
 ["caption","frameColor","frameDesign","zoom","panX","panY"].forEach(id=>$(id).addEventListener("input",updateDraft));
-$("saveEdit").addEventListener("click",async()=>{if(!draft)return;updateDraft();await put(draft);photos=await getAll();photos.sort((a,b)=>a.id.localeCompare(b.id));renderGrid();setStatus("Edits saved on this device.");});
-async function addFiles(files){
-  const usable=[...files].filter(f=>f.type.startsWith("image/"));
-  const room=MAX_PHOTOS-photos.length;
-  if(usable.length>room)setStatus(`Only ${room} more photo(s) fit. The rest were skipped.`);
-  for(const file of usable.slice(0,room)){
-    const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});
-    const p=defaults(data);await put(p);photos.push(p);
-  }
-  renderGrid();
-  if(pendingSlot!==null&&photos.length){selectPhoto(photos[photos.length-1].id);pendingSlot=null;}
+$("saveEdit").addEventListener("click",async()=>{if(!draft||!db)return;updateDraft();try{await put(draft);photos=sortPhotos(await getAll());renderGrid();setStatus("Edits saved on this device.");}catch(error){setStatus("Save failed. Keep a backup: "+error.message);}});
+async function optimizePhoto(file){
+ if(!supportedImage(file.type))throw new Error("Unsupported format: "+file.name);
+ if(file.size>MAX_UPLOAD_BYTES)throw new Error("Image exceeds the 20 MB upload limit: "+file.name);
+ const imageUrl=URL.createObjectURL(file);
+ try{
+  const image=await loadImage(imageUrl);
+  if(!image.naturalWidth||!image.naturalHeight)throw new Error("Unreadable image");
+  const ratio=Math.min(1,2000/Math.max(image.naturalWidth,image.naturalHeight));
+  const canvas=document.createElement("canvas");
+  canvas.width=Math.max(1,Math.round(image.naturalWidth*ratio));
+  canvas.height=Math.max(1,Math.round(image.naturalHeight*ratio));
+  const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas unavailable");
+  ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(image,0,0,canvas.width,canvas.height);
+  return canvas.toDataURL("image/jpeg",.88);
+ }finally{URL.revokeObjectURL(imageUrl);}
 }
-$("addBtn").addEventListener("click",()=>$("fileInput").click());
-$("fileInput").addEventListener("change",async e=>{try{await addFiles(e.target.files);}catch(err){alert("Could not add one or more images: "+err.message);}e.target.value="";});
-$("deletePhoto").addEventListener("click",async()=>{if(!selectedId)return;if(!confirm("Remove this photo from the yearbook?"))return;await remove(selectedId);photos=await getAll();selectedId=null;draft=null;sourceImage=null;$("editor").hidden=true;$("noSelection").hidden=false;renderGrid();});
-function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+async function addFiles(files){
+ if(!db)throw new Error("Browser storage has not opened.");
+ const chosen=[...files],room=MAX_PHOTOS-photos.length;
+ if(chosen.length>room)setStatus("The Yearbook has space for "+room+" more photo(s).");
+ let added=0;
+ for(const file of chosen.slice(0,room)){
+   try{const data=await optimizePhoto(file);const p=defaults(data);p.position=photos.length;await put(p);photos.push(p);added++;}
+   catch(error){setStatus("Some photos could not be added: "+error.message);}
+ }
+ sortPhotos(photos);renderGrid();
+ if(added>0&&pendingSlot!==null){selectPhoto(photos[photos.length-1].id);}
+ pendingSlot=null;
+ if(added>0)setStatus(added+" photo(s) added and saved on this browser. Export a backup regularly.");
+}
+$("addBtn").addEventListener("click",()=>{pendingSlot=null;$("fileInput").click();});
+$("fileInput").addEventListener("change",async e=>{try{if(e.target.files.length)await addFiles(e.target.files);}catch(error){setStatus("Upload failed: "+error.message);}finally{e.target.value="";}});
+$("deletePhoto").addEventListener("click",async()=>{
+ if(!selectedId||!db||!confirm("Remove this photo from the yearbook?"))return;
+ try{await remove(selectedId);photos=sortPhotos(await getAll());selectionToken++;selectedId=null;draft=null;sourceImage=null;$("editor").hidden=true;$("noSelection").hidden=false;renderGrid();}
+ catch(error){setStatus("Could not remove photo: "+error.message);}
+});
+function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
 function downloadPhoto(p){
-  loadImage(p.data).then(img=>{const c=document.createElement("canvas");c.width=1200;c.height=1500;drawPhoto(c.getContext("2d"),p,img,c.width,c.height,true);c.toBlob(b=>b&&downloadBlob(b,"khaemenes-yearbook-photo.png"),"image/png");});
+  loadImage(p.data).then(img=>{const c=document.createElement("canvas");c.width=1200;c.height=1500;drawPhoto(c.getContext("2d"),p,img,c.width,c.height,true);c.toBlob(b=>b?downloadBlob(b,"khaemenes-yearbook-"+String(p.id).replace(/[^a-z0-9_-]/gi,"")+".png"):setStatus("Could not export image."),"image/png");}).catch(error=>setStatus("Photo export failed: "+error.message));
 }
 $("downloadPhoto").addEventListener("click",()=>{const p=photos.find(x=>x.id===selectedId);if(p)downloadPhoto(draft||p);});
 $("printBtn").addEventListener("click",()=>window.print());
 $("exportBtn").addEventListener("click",()=>{const blob=new Blob([JSON.stringify({app:"Khaemenes Academy Yearbook",version:1,exported:new Date().toISOString(),photos},null,2)],{type:"application/json"});downloadBlob(blob,"khaemenes-yearbook-project.json");});
 $("importBtn").addEventListener("click",()=>$("projectInput").click());
+function validatedImport(raw){
+ if(!raw||!Array.isArray(raw.photos)||raw.photos.length>MAX_PHOTOS)throw new Error("Invalid project or more than 50 photos.");
+ if(raw.version!==1)throw new Error("Unsupported project format version.");
+ const safe=[],used=new Set();
+ for(const item of raw.photos){
+  if(!item||typeof item.data!=="string"||!/^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/i.test(item.data)||item.data.length>MAX_IMPORT_BYTES)
+   throw new Error("An imported photo is invalid or too large.");
+  const id=typeof item.id==="string"&&/^p_[a-z0-9_]+$/i.test(item.id)&&!used.has(item.id)?item.id:uid();
+  used.add(id);
+  safe.push({id,data:item.data,caption:String(item.caption||"").slice(0,90),
+    color:/^#[0-9a-f]{6}$/i.test(item.color)?item.color:"#c9a86a",
+    design:["classic","double","dashed","soft","minimal","film"].includes(item.design)?item.design:"classic",
+    zoom:clamp(Number(item.zoom)||1,1,3),panX:clamp(Number(item.panX)||0,-100,100),
+    panY:clamp(Number(item.panY)||0,-100,100),position:safe.length});
+ }
+ return safe;
+}
+function replaceAllAtomically(items){
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction(STORE,"readwrite"),store=tx.objectStore(STORE);
+  tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||new Error("Storage error"));
+  tx.onabort=()=>reject(tx.error||new Error("Import was rolled back"));
+  store.clear();for(const item of items)store.put(item);
+ });
+}
 $("projectInput").addEventListener("change",async e=>{
-  const file=e.target.files[0];if(!file)return;
-  try{const data=JSON.parse(await file.text());if(!data||!Array.isArray(data.photos))throw new Error("This is not a yearbook project file.");
-    if(data.photos.length>MAX_PHOTOS)throw new Error("This project contains more than 50 photos.");
-    if(!confirm("Import this project and replace the photos currently in this yearbook?"))return;
-    await transaction("readwrite",s=>s.clear());photos=[];
-    for(const raw of data.photos){if(!raw.data||!String(raw.data).startsWith("data:image/"))continue;const p={...defaults(raw.data),...raw,id:raw.id||uid()};await put(p);photos.push(p);}
-    selectedId=null;$("editor").hidden=true;$("noSelection").hidden=false;renderGrid();alert("Yearbook project imported.");
-  }catch(err){alert("Import failed: "+err.message);}finally{e.target.value="";}
+ const file=e.target.files?.[0];if(!file)return;
+ try{
+  if(!db)throw new Error("Storage unavailable");
+  if(file.size>MAX_IMPORT_BYTES)throw new Error("Project file is too large (55 MB maximum).");
+  const data=JSON.parse(await file.text());
+  const incoming=validatedImport(data);
+  if(!confirm("Replace this browser's existing "+photos.length+" Yearbook photos with "+incoming.length+" imported photos? Export a backup first."))return;
+  await replaceAllAtomically(incoming);
+  photos=sortPhotos(await getAll());selectionToken++;selectedId=null;draft=null;sourceImage=null;
+  $("editor").hidden=true;$("noSelection").hidden=false;renderGrid();
+  setStatus("Project imported: "+photos.length+" photos. Save an export backup.");
+ }catch(error){setStatus("Import failed. Existing records should remain unchanged: "+error.message);}
+ finally{e.target.value="";}
 });
-function chooseSlotUpload(){if(photos.length>=MAX_PHOTOS)return;$("fileInput").click();}
 async function init(){
-  try{db=await openDB();photos=await getAll();photos.sort((a,b)=>a.id.localeCompare(b.id));renderGrid();}
+  try{db=await openDB();photos=await getAll();sortPhotos(photos);renderGrid();}
   catch(e){$("photoGrid").innerHTML='<div class="empty-state">Local photo storage could not be opened in this browser. Try a current browser with IndexedDB enabled.</div>';setStatus(e.message);}
 }
 init();
