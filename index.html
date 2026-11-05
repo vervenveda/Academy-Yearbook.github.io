@@ -226,6 +226,61 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
 #yearbookEditorDialog .yearbook-preview-viewport canvas{display:block;max-width:100%!important;max-height:100%!important;height:auto!important;width:auto!important;object-fit:contain}
 #yearbookEditorDialog #cropZoomLevel{font:400 16px/1.4 Nunito,Arial,sans-serif;color:#fff8e9}
 /* Preview height is owned by the single editor layout above. */
+
+/* Single canonical full-viewport editor: image always scales to available preview area. */
+#yearbookEditorDialog{
+  width:calc(100vw - 16px)!important;max-width:none!important;
+  height:calc(100dvh - 16px)!important;max-height:none!important;
+  margin:auto!important;padding:0!important;
+}
+#yearbookEditorDialog .yearbook-dialog-wrap{height:100%;min-height:0;display:flex;flex-direction:column}
+#yearbookEditorDialog .yearbook-dialog-header{flex:0 0 auto;position:relative;z-index:2}
+#yearbookEditorDialog .yearbook-dialog-body{
+  flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
+  display:flex;flex-direction:column;gap:12px;padding:12px!important;
+}
+#yearbookEditorDialog .yearbook-controls-column{flex:0 0 auto;display:flex;flex-direction:column;gap:12px}
+#yearbookEditorDialog .yearbook-action-banner{flex:0 0 auto}
+#yearbookEditorDialog .yearbook-editor-panel{flex:1;min-height:0;width:100%;padding:12px}
+#yearbookEditorDialog #editor:not([hidden]){display:flex;flex-direction:column;gap:12px}
+#yearbookEditorDialog .yearbook-preview-pane{
+  width:100%;min-width:0;margin:0!important;padding:10px;
+  display:flex;flex-direction:column;align-items:center;overflow:visible!important;
+}
+#yearbookEditorDialog .yearbook-preview-viewport{
+  box-sizing:border-box;display:flex;align-items:center;justify-content:center;
+  flex:none!important;width:100%!important;height:clamp(320px,68dvh,1100px)!important;
+  max-height:none!important;min-height:0!important;overflow:hidden;
+}
+#yearbookEditorDialog .yearbook-preview-viewport canvas{
+  display:block;flex:none;min-width:0;min-height:0;
+  width:var(--yearbook-fit-width,auto)!important;
+  height:var(--yearbook-fit-height,auto)!important;
+  max-width:100%!important;max-height:100%!important;
+  object-fit:contain!important;
+  transform:scale(var(--yearbook-view-zoom,1));transform-origin:center;
+}
+#yearbookEditorDialog .yearbook-edit-controls{
+  width:100%;min-width:0;display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;overflow:visible;
+}
+#yearbookEditorDialog .yearbook-edit-controls .field{margin:0}
+#yearbookEditorDialog .yearbook-edit-controls>.row{display:contents}
+#yearbookEditorDialog .yearbook-edit-controls .toolbar{
+  grid-column:1/-1;position:static!important;display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;
+}
+#yearbookEditorDialog .yearbook-nudge-controls,
+#yearbookEditorDialog .yearbook-edit-controls>.hint{grid-column:1/-1}
+@media(max-width:700px){
+ #yearbookEditorDialog{width:calc(100vw - 8px)!important;height:calc(100dvh - 8px)!important}
+ #yearbookEditorDialog .yearbook-dialog-body{padding:8px!important}
+ #yearbookEditorDialog .yearbook-preview-viewport{height:56dvh!important}
+ #yearbookEditorDialog .yearbook-edit-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #yearbookEditorDialog .yearbook-edit-controls .toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:400px){#yearbookEditorDialog .yearbook-edit-controls{grid-template-columns:1fr}}
+
 /* Official VNV header and utility dock are owned by canonical ecosystem scripts.
    Keep Yearbook-specific selectors scoped to avoid competing UI layers. */
 .yearbook-footer{box-sizing:border-box;width:100%;margin:24px 0 0;padding:20px 16px 90px;text-align:center;background:#243038;color:#fff8e9;border-top:1px solid #b48b45;font:400 16px/1.6 "Brandon Grotesque",Nunito,Arial,sans-serif}
@@ -391,10 +446,23 @@ function chooseForSlot(slot){pendingSlot=slot;$("fileInput").click();}
 function selectPhoto(id){
   selectedId=id;const p=photos.find(x=>x.id===id);if(!p)return;
   const ticket=++selectionToken;
-  draft=structuredCloneSafe(p);loadImage(draft.data).then(img=>{if(ticket!==selectionToken)return;sourceImage=img;fillEditor();renderGrid();if(!editorDialog.open)editorDialog.showModal();}).catch(()=>{if(ticket===selectionToken)setStatus("Could not load this image.");});
+  draft=structuredCloneSafe(p);loadImage(draft.data).then(img=>{if(ticket!==selectionToken)return;sourceImage=img;fillEditor();renderGrid();if(!editorDialog.open)editorDialog.showModal();requestAnimationFrame(fitPreviewToScreen);}).catch(()=>{if(ticket===selectionToken)setStatus("Could not load this image.");});
 }
 function structuredCloneSafe(x){return JSON.parse(JSON.stringify(x));}
 function loadImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src;});}
+function fitPreviewToScreen(){
+ const canvas=$("preview"),viewport=canvas.closest(".yearbook-preview-viewport");
+ if(!canvas.width||!canvas.height||!viewport)return;
+ const aw=Math.max(1,viewport.clientWidth-6),ah=Math.max(1,viewport.clientHeight-6);
+ if(aw<8||ah<8)return;
+ const scale=Math.min(aw/canvas.width,ah/canvas.height);
+ canvas.style.setProperty("--yearbook-fit-width",Math.floor(canvas.width*scale)+"px");
+ canvas.style.setProperty("--yearbook-fit-height",Math.floor(canvas.height*scale)+"px");
+}
+if(typeof ResizeObserver==="function"){
+ new ResizeObserver(()=>fitPreviewToScreen()).observe(document.querySelector(".yearbook-preview-viewport"));
+}
+window.addEventListener("resize",fitPreviewToScreen,{passive:true});
 function updatePreviewZoom(){const factor=clamp(Number($("viewZoom").value)||1,1,2.5);$("preview").style.setProperty("--yearbook-view-zoom",factor);$("viewZoomLevel").textContent=Math.round(factor*100)+"%";}
 $("viewZoom").addEventListener("input",updatePreviewZoom);
 $("viewZoomOut").addEventListener("click",()=>{$("viewZoom").value=String(clamp(Number($("viewZoom").value)-.1,1,2.5));updatePreviewZoom()});
@@ -441,6 +509,7 @@ function drawPreview(){
  if(canvas.width!==size.width)canvas.width=size.width;
  if(canvas.height!==size.height)canvas.height=size.height;
  drawPhoto(canvas.getContext("2d"),draft,sourceImage,canvas.width,canvas.height,true);
+ fitPreviewToScreen();
 }
 function setStatus(msg){$("status").textContent=msg;}
 function updateDraft(){
