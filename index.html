@@ -281,6 +281,18 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
 }
 @media(max-width:400px){#yearbookEditorDialog .yearbook-edit-controls{grid-template-columns:1fr}}
 
+/* Sagaen is a separate, opt-in creative studio; its file data stays independent. */
+#yearbookEditorDialog .yearbook-action-grid .yearbook-sagaen-link{
+ display:flex;align-items:center;justify-content:center;text-decoration:none;
+ width:100%;min-width:0;min-height:44px;padding:8px 10px;box-sizing:border-box;
+ color:#243038;background:#fff8e9;border:1px solid #d5b77b;border-radius:7px;
+ font:400 16px/1.35 "Brandon Grotesque",Nunito,Arial,sans-serif;text-align:center;
+}
+#yearbookEditorDialog .yearbook-action-grid .yearbook-sagaen-link:is(:hover,:focus-visible){
+ background:#ecd9b8;color:#243038;outline-offset:2px;
+}
+#yearbookEditorDialog .yearbook-sagaen-note{margin:9px 0 0;text-align:center;color:#fff8e9;font:400 16px/1.4 "Brandon Grotesque",Nunito,Arial,sans-serif}
+@media(min-width:801px){#yearbookEditorDialog .yearbook-action-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 /* Official VNV header and utility dock are owned by canonical ecosystem scripts.
    Keep Yearbook-specific selectors scoped to avoid competing UI layers. */
 .yearbook-footer{box-sizing:border-box;width:100%;margin:24px 0 0;padding:20px 16px 90px;text-align:center;background:#243038;color:#fff8e9;border-top:1px solid #b48b45;font:400 16px/1.6 "Brandon Grotesque",Nunito,Arial,sans-serif}
@@ -326,7 +338,9 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
         <button class="btn" id="exportBtn">Export Project</button>
         <button class="btn" id="importBtn">Import Project</button>
         <button class="btn subtle" id="printBtn">Print Yearbook</button>
+        <a class="btn yearbook-sagaen-link" href="https://vervenveda.com/bazaarart.github.io/apps/art_tool_Sagaen%E2%84%A2_art_studio_index.html" target="_blank" rel="noopener noreferrer" aria-label="Open Sagaen Art Studio in a new tab">Open Sagaen Art Studio</a>
       </div>
+      <p class="yearbook-sagaen-note">Want to develop your artwork further? Open Sagaen Art Studio, export your finished image, then return here and choose Add Photos. Your Yearbook photographs are not transferred automatically.</p>
       <span class="counter yearbook-photo-counter" id="counter">0 / 50 photos</span>
       <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple aria-label="Choose up to 50 yearbook photos">
       <input id="projectInput" type="file" accept="application/json,.json" aria-label="Import saved yearbook backup">
