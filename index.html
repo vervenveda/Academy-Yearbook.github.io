@@ -592,18 +592,76 @@ function downloadPhoto(p){
   loadImage(p.data).then(img=>{const c=document.createElement("canvas"),size=imageCanvasSize(img);c.width=size.width;c.height=size.height;drawPhoto(c.getContext("2d"),p,img,c.width,c.height,true);c.toBlob(b=>b?downloadBlob(b,"khaemenes-yearbook-"+String(p.id).replace(/[^a-z0-9_-]/gi,"")+".png"):setStatus("Could not export image."),"image/png");}).catch(error=>setStatus("Photo export failed: "+error.message));
 }
 $("downloadPhoto").addEventListener("click",()=>{const p=photos.find(x=>x.id===selectedId);if(p)downloadPhoto(draft||p);});
-$("printBtn").addEventListener("click",()=>window.print());
-let printingSingle=false;
-function clearSinglePrint(){if(!printingSingle)return;printingSingle=false;document.body.classList.remove("yearbook-print-single");$("yearbookSinglePrintSheet").hidden=true;$("yearbookSinglePrintImage").removeAttribute("src");}
-window.addEventListener("afterprint",clearSinglePrint);
+// Independent print document: no editing modal, navigation, grid toolbar, or ecosystem widgets.
+function printWindowShell(title){
+ const win=window.open("","_blank");
+ if(!win){setStatus("Allow pop-up windows for this Yearbook to open the isolated print preview.");return null;}
+ win.opener=null;
+ win.document.title=title;
+ win.document.body.textContent="Preparing private Yearbook print preview…";
+ return win;
+}
+function escapePrintHTML(value){
+ return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function printDocumentStyles(){
+ return [
+ "@page{size:auto;margin:12mm}",
+ "*{box-sizing:border-box}",
+ "html,body{margin:0;padding:0;background:#fff;color:#1e2425;font:16px/1.4 Georgia,serif}",
+ ".print-controls{padding:12px 16px;background:#f5f1e9;display:flex;justify-content:space-between;align-items:center;gap:16px;font:16px Arial,sans-serif}",
+ ".print-controls button{padding:8px 18px;background:#243038;color:#fff8e9;border:0;border-radius:7px;cursor:pointer;font:16px Arial,sans-serif}",
+ "h1{font-weight:400;font-size:24px;text-align:center;margin:14px 0 5px}",
+ ".subtitle{text-align:center;font-size:14px;margin:0 0 14px}",
+ ".single-photo{display:flex;align-items:center;justify-content:center;width:100%;min-height:60vh}",
+ ".single-photo img{display:block;max-width:100%;max-height:calc(100vh - 35mm);width:auto;height:auto;object-fit:contain;break-inside:avoid}",
+ ".sheet-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8mm;align-items:start}",
+ ".sheet-card{min-width:0;margin:0;break-inside:avoid;page-break-inside:avoid}",
+ ".sheet-card img{display:block;width:100%;height:auto;object-fit:contain}",
+ ".sheet-card figcaption{text-align:center;font-size:11px;padding:5px 2px;overflow-wrap:anywhere}",
+ "@media print{html,body{background:#fff!important}.print-controls{display:none!important}.single-photo{min-height:0}.sheet-grid{grid-template-columns:repeat(3,minmax(0,1fr))}h1{margin-top:0}}"
+ ].join("\n");
+}
+function printHeaderHTML(title,subtitle){
+ return "<h1>"+escapePrintHTML(title)+"</h1><p class='subtitle'>"+escapePrintHTML(subtitle)+"</p>";
+}
+function writeIsolatedPrint(win,mode,body){
+ if(!win||win.closed)return;
+ const doc=win.document;
+ doc.open();
+ doc.write('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yearbook '+escapePrintHTML(mode)+' print</title><style>'+printDocumentStyles()+'</style></head><body><div class="print-controls"><span>Private Yearbook · '+escapePrintHTML(mode)+' print</span><button type="button" onclick="window.print()">Print</button></div>'+body+'</body></html>');
+ doc.close();
+ const imgs=Array.from(doc.images);
+ Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;})))
+ .then(()=>{if(!win.closed){win.focus();win.print();}});
+}
+function renderedPhotoURI(p,img,width,height){
+ const c=document.createElement("canvas");c.width=width;c.height=height;
+ drawPhoto(c.getContext("2d"),p,img,width,height,true);
+ return c.toDataURL("image/png");
+}
 $("printSelectedPhoto").addEventListener("click",()=>{
- if(!draft||!sourceImage){setStatus("Select a photo before printing.");return;}
+ if(!draft||!sourceImage){setStatus("Select a photograph before printing.");return;}
  updateDraft();
- const canvas=document.createElement("canvas"),size=imageCanvasSize(sourceImage);canvas.width=size.width;canvas.height=size.height;drawPhoto(canvas.getContext("2d"),draft,sourceImage,canvas.width,canvas.height,true);
- const image=$("yearbookSinglePrintImage");
- image.onload=()=>{printingSingle=true;$("yearbookSinglePrintSheet").hidden=false;document.body.classList.add("yearbook-print-single");requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()))};
- image.onerror=()=>{setStatus("Unable to prepare photo print.");clearSinglePrint();};
- image.src=canvas.toDataURL("image/png");
+ const win=printWindowShell("Yearbook · Selected Photograph");if(!win)return;
+ try{
+  const size=imageCanvasSize(sourceImage,1800),uri=renderedPhotoURI(draft,sourceImage,size.width,size.height);
+  const body=printHeaderHTML("My School Yearbook","Selected photograph")+'<main class="single-photo"><img alt="Selected Yearbook photograph" src="'+uri+'"></main>';
+  writeIsolatedPrint(win,"single photograph",body);
+ }catch(error){win.close();setStatus("Could not prepare this photo for printing: "+error.message);}
+});
+$("printBtn").addEventListener("click",async()=>{
+ if(!photos.length){setStatus("Add a photograph before printing the Yearbook.");return;}
+ const win=printWindowShell("My School Yearbook · Full Collection");if(!win)return;
+ try{
+  const cards=[];
+  for(const [i,p] of sortPhotos([...photos]).entries()){
+   const img=await loadImage(p.data),uri=renderedPhotoURI(p,img,900,1125);
+   const caption=escapePrintHTML(p.caption||"");
+   cards.push('<figure class="sheet-card"><img alt="Yearbook photograph '+(i+1)+'" src="'+uri+'"><figcaption>'+(i+1)+(caption?" · "+caption:"")+'</figcaption></figure>');
+  }
+  writeIsolatedPrint(win,"entire Yearbook",printHeaderHTML("My School Yearbook",photos.length+" photographs")+'<main class="sheet-grid">'+cards.join("")+'</main>');
+ }catch(error){if(!win.closed)win.close();setStatus("Could not prepare the complete Yearbook: "+error.message);}
 });
 $("exportBtn").addEventListener("click",()=>{const blob=new Blob([JSON.stringify({app:"Khaemenes Academy Yearbook",version:1,exported:new Date().toISOString(),photos},null,2)],{type:"application/json"});downloadBlob(blob,"khaemenes-yearbook-project.json");});
 $("importBtn").addEventListener("click",()=>$("projectInput").click());
