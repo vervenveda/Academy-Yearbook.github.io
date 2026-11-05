@@ -280,7 +280,7 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
     <h2 id="yearbookPhotoEditorTitle">Photo Editor</h2>
     <div id="noSelection" class="empty-state">Choose an empty frame to add a photo, or select a photo to edit its crop, frame and caption.</div>
     <div id="editor" hidden>
-      <div class="preview yearbook-preview-pane"><div class="yearbook-preview-viewport"><canvas id="preview" width="600" height="750"></canvas></div><p class="yearbook-preview-caption">Live photo preview · preview zoom does not change the saved crop</p><div class="yearbook-view-zoom"><button class="btn" id="viewZoomOut" type="button" aria-label="Zoom preview out">−</button><label for="viewZoom">Preview zoom <output id="viewZoomLevel">100%</output></label><input id="viewZoom" type="range" min="1" max="2.5" step=".1" value="1"><button class="btn" id="viewZoomIn" type="button" aria-label="Zoom preview in">+</button></div></div>
+      <div class="preview yearbook-preview-pane"><div class="yearbook-preview-viewport"><canvas id="preview" width="600" height="750" aria-label="Full image editing preview, shown at original proportions"></canvas></div><p class="yearbook-preview-caption">Full-image preview · source proportions preserved · preview zoom does not change saved edits</p><div class="yearbook-view-zoom"><button class="btn" id="viewZoomOut" type="button" aria-label="Zoom preview out">−</button><label for="viewZoom">Preview zoom <output id="viewZoomLevel">100%</output></label><input id="viewZoom" type="range" min="1" max="2.5" step=".1" value="1"><button class="btn" id="viewZoomIn" type="button" aria-label="Zoom preview in">+</button></div></div>
       <div class="yearbook-edit-controls" aria-label="Photo editing controls">
       <div class="field"><label for="caption">Photo caption</label><input id="caption" type="text" maxlength="90" placeholder="Add a memory or caption"></div>
       <div class="row">
@@ -299,7 +299,7 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
       <div class="field"><label for="panX">Move image left / right</label><input id="panX" type="range" min="-100" max="100" value="0"></div>
       <div class="field"><label for="panY">Move image up / down</label><input id="panY" type="range" min="-100" max="100" value="0"></div>
       <div class="yearbook-nudge-controls" aria-label="Position photograph"><span>Move image</span><button class="btn" type="button" data-yearbook-move="left">← Left</button><button class="btn" type="button" data-yearbook-move="right">Right →</button><button class="btn" type="button" data-yearbook-move="up">↑ Up</button><button class="btn" type="button" data-yearbook-move="down">Down ↓</button><button class="btn" type="button" id="centerPhoto">Center</button></div>
-      <p class="hint">Crop zoom changes the saved photo; preview zoom only magnifies the editing view.</p>
+      <p class="hint">The preview, single-photo export and print follow the source image proportions. Crop zoom changes saved framing; preview zoom only magnifies the viewing area. The Yearbook gallery cards remain portrait.</p>
       <div class="toolbar">
         <button class="btn primary" id="saveEdit">Save edits</button>
         <button class="btn" id="downloadPhoto">Download photo</button>
@@ -429,7 +429,19 @@ function drawPhoto(ctx,p,img,w,h,withFrame=true){
   if(p.caption){ctx.save();const barH=Math.max(42,h*.087);ctx.fillStyle="#000a";ctx.fillRect(0,h-barH,w,barH);ctx.fillStyle="#fff";ctx.font=`${Math.max(12,w*.035)}px Georgia`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(String(p.caption).slice(0,90),w/2,h-barH/2,w-35);ctx.restore();}
 }
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,r):(ctx.rect(x,y,w,h));}
-function drawPreview(){if(!draft||!sourceImage)return;drawPhoto($("preview").getContext("2d"),draft,sourceImage,600,750,true);}
+// Sagaen-style source-aspect fitting: editing preview follows the image rather than forcing portrait.
+function imageCanvasSize(img,maxEdge=1200){
+ const iw=Math.max(1,img.naturalWidth||img.width||1),ih=Math.max(1,img.naturalHeight||img.height||1);
+ const scale=Math.min(1,maxEdge/Math.max(iw,ih));
+ return {width:Math.max(1,Math.round(iw*scale)),height:Math.max(1,Math.round(ih*scale))};
+}
+function drawPreview(){
+ if(!draft||!sourceImage)return;
+ const canvas=$("preview"),size=imageCanvasSize(sourceImage);
+ if(canvas.width!==size.width)canvas.width=size.width;
+ if(canvas.height!==size.height)canvas.height=size.height;
+ drawPhoto(canvas.getContext("2d"),draft,sourceImage,canvas.width,canvas.height,true);
+}
 function setStatus(msg){$("status").textContent=msg;}
 function updateDraft(){
   if(!draft)return;draft.caption=$("caption").value;draft.color=$("frameColor").value;draft.design=$("frameDesign").value;draft.fit=$("imageFit").value;
@@ -494,7 +506,7 @@ $("deletePhoto").addEventListener("click",async()=>{
 });
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
 function downloadPhoto(p){
-  loadImage(p.data).then(img=>{const c=document.createElement("canvas");c.width=1200;c.height=1500;drawPhoto(c.getContext("2d"),p,img,c.width,c.height,true);c.toBlob(b=>b?downloadBlob(b,"khaemenes-yearbook-"+String(p.id).replace(/[^a-z0-9_-]/gi,"")+".png"):setStatus("Could not export image."),"image/png");}).catch(error=>setStatus("Photo export failed: "+error.message));
+  loadImage(p.data).then(img=>{const c=document.createElement("canvas"),size=imageCanvasSize(img);c.width=size.width;c.height=size.height;drawPhoto(c.getContext("2d"),p,img,c.width,c.height,true);c.toBlob(b=>b?downloadBlob(b,"khaemenes-yearbook-"+String(p.id).replace(/[^a-z0-9_-]/gi,"")+".png"):setStatus("Could not export image."),"image/png");}).catch(error=>setStatus("Photo export failed: "+error.message));
 }
 $("downloadPhoto").addEventListener("click",()=>{const p=photos.find(x=>x.id===selectedId);if(p)downloadPhoto(draft||p);});
 $("printBtn").addEventListener("click",()=>window.print());
@@ -504,7 +516,7 @@ window.addEventListener("afterprint",clearSinglePrint);
 $("printSelectedPhoto").addEventListener("click",()=>{
  if(!draft||!sourceImage){setStatus("Select a photo before printing.");return;}
  updateDraft();
- const canvas=document.createElement("canvas");canvas.width=1200;canvas.height=1500;drawPhoto(canvas.getContext("2d"),draft,sourceImage,1200,1500,true);
+ const canvas=document.createElement("canvas"),size=imageCanvasSize(sourceImage);canvas.width=size.width;canvas.height=size.height;drawPhoto(canvas.getContext("2d"),draft,sourceImage,canvas.width,canvas.height,true);
  const image=$("yearbookSinglePrintImage");
  image.onload=()=>{printingSingle=true;$("yearbookSinglePrintSheet").hidden=false;document.body.classList.add("yearbook-print-single");requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()))};
  image.onerror=()=>{setStatus("Unable to prepare photo print.");clearSinglePrint();};
