@@ -309,7 +309,7 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
   <p class="sub">A year of moments, friendships, discoveries and memories.</p>
 </header>
 
-<p class="yearbook-private-note">Your yearbook is private to this browser profile and is not yet connected to individual Academy learner accounts. You can export and import backups. Only add photographs you have permission to use.</p>
+<p class="yearbook-private-note">The Yearbook gallery is shared by learners using this browser, not separate authenticated accounts. Only explicitly linked photos appear in a learner’s profile picker. Photos and backups are unencrypted. Use pictures you have permission to share.</p>
 <p class="yearbook-app-status" id="status" role="status" aria-live="polite">Your yearbook is opening. Photos stay on this browser unless you export a backup.</p>
 <div class="layout">
   <main class="panel yearbook-gallery-panel">
@@ -372,6 +372,7 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
       <div class="toolbar">
         <button class="btn primary" id="saveEdit">Save edits</button>
         <button class="btn" id="downloadPhoto">Download photo</button>
+         <button class="btn" id="yearbookMakeProfileChoice" type="button">Make Available to My Profile</button>
         <button class="btn" id="printSelectedPhoto" type="button">Print This Photo</button>
         <button class="btn subtle" id="deletePhoto">Remove photo</button>
       </div>
@@ -391,6 +392,7 @@ h1,.yearbook-controls-column h2{font-family:Cinzel,Georgia,serif;font-weight:400
 </div>
 <section id="yearbookSinglePrintSheet" hidden aria-label="Selected photo print"><img id="yearbookSinglePrintImage" alt="Selected Yearbook photo"></section>
 
+<script src="https://vervenveda.com/Khaemenes_Academy.github.io/assets/khaemenes-yearbook-profile-images.js?v=20261109-pick-v1"></script>
 <script>
 (() => {
 "use strict";
@@ -662,6 +664,16 @@ $("printBtn").addEventListener("click",async()=>{
   }
   writeIsolatedPrint(win,"entire Yearbook",printHeaderHTML("My School Yearbook",photos.length+" photographs")+'<main class="sheet-grid">'+cards.join("")+'</main>');
  }catch(error){if(!win.closed)win.close();setStatus("Could not prepare the complete Yearbook: "+error.message);}
+});
+$("yearbookMakeProfileChoice").addEventListener("click",async()=>{
+ const bridge=window.KhaemenesYearbookProfileImages,learnerId=bridge?.owner?.();
+ const item=photos.find(p=>p.id===selectedId);
+ if(!learnerId||!item){setStatus("Select an Academy learner and a Yearbook photograph first.");return}
+ if(!confirm("Make this photograph available in the selected learner's profile picker on this browser? The Yearbook original will not change. Only choose pictures you have permission to share."))return;
+ const button=$("yearbookMakeProfileChoice");button.disabled=true;
+ try{setStatus(await bridge.publish(learnerId,item.id)?"The selected photo is available to this learner's profile picture picker.":"Could not link the photo. Check the selected learner.");}
+ catch{setStatus("Could not link the photo. Existing records are unchanged.")}
+ finally{button.disabled=false}
 });
 $("exportBtn").addEventListener("click",()=>{const blob=new Blob([JSON.stringify({app:"Khaemenes Academy Yearbook",version:1,exported:new Date().toISOString(),photos},null,2)],{type:"application/json"});downloadBlob(blob,"khaemenes-yearbook-project.json");});
 $("importBtn").addEventListener("click",()=>$("projectInput").click());
