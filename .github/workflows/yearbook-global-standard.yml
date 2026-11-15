@@ -1,0 +1,36 @@
+name: Academy Yearbook Public Standard
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'assets/yearbook-global-standard-v1.js'
+      - 'tools/yearbook-global-standard-audit.mjs'
+      - 'tools/semantic-hierarchy-audit.mjs'
+      - '.github/workflows/yearbook-global-standard.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  normalize:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tools/yearbook-global-standard-audit.mjs --write
+      - run: node tools/yearbook-global-standard-audit.mjs --check
+      - run: node tools/semantic-hierarchy-audit.mjs
+      - name: Protect specialized MiniCloud tool
+        run: git diff --quiet -- yearbook-agi-minicloud.html
+      - run: git diff --check
+      - name: Commit normalization
+        shell: bash
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "Khaemenes Academy Automation"
+          git config user.email "khaemenesacademy@users.noreply.github.com"
+          git add index.html assets/yearbook-global-standard-v1.js tools/yearbook-global-standard-audit.mjs tools/semantic-hierarchy-audit.mjs
+          git commit -m "Standardize Academy Yearbook public front page"
+          git push
